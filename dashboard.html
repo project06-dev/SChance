@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -4564,9 +4564,23 @@
             `;
         }
 
-        function confirmCheckout() {
+        // Ganti fungsi confirmCheckout yang lama dengan yang ini:
+        async function confirmCheckout() {
+            // Cek batasan Guest
+            if (!checkGuestRestriction('melakukan checkout')) {
+                return;
+            }
+
             const selectedItems = cart.filter(item => item.selected);
             
+            if (selectedItems.length === 0) {
+                showNotification('Pilih minimal 1 produk untuk checkout');
+                return;
+            }
+
+            // Tampilkan loading (opsional, biar user tahu sedang proses)
+            showNotification('Sedang memproses transaksi...');
+
             const shippingCosts = {
                 'regular': 15000,
                 'express': 25000,
@@ -4586,7 +4600,35 @@
                 'sameday': 'Same Day'
             };
 
-            // Kelompokkan items berdasarkan penjual
+            // --- UPDATE STOK KE FIREBASE (BAGIAN BARU) ---
+            // Kita loop semua barang yang dibeli
+            for (const item of selectedItems) {
+                // 1. Update tampilan lokal (biar cepat)
+                const product = products.find(p => p.id === item.product.id);
+                if (product) {
+                    product.stock -= item.quantity;
+                }
+
+                // 2. UPDATE DATABASE SERVER (Agar user lain lihat stok berkurang)
+                // Cek apakah ini produk yang ada di database (memiliki firestoreId)
+                if (item.product.firestoreId && window.db && window.firestoreDoc && window.firestoreUpdateDoc) {
+                    try {
+                        const productRef = window.firestoreDoc(window.db, "products", item.product.firestoreId);
+                        
+                        // Perintah ke Firebase: "Kurangi stok sekarang juga!"
+                        await window.firestoreUpdateDoc(productRef, {
+                            // Menggunakan stok baru hasil pengurangan
+                            stock: product.stock 
+                        });
+                        console.log(`Stok ${item.product.name} berhasil diupdate di database.`);
+                    } catch (error) {
+                        console.error("Gagal update stok di database:", error);
+                    }
+                }
+            }
+            // ---------------------------------------------
+
+            // Kelompokkan items berdasarkan penjual untuk pembuatan Order
             const itemsBySeller = {};
             selectedItems.forEach(item => {
                 const seller = item.product.seller;
@@ -4596,7 +4638,6 @@
                 itemsBySeller[seller].push(item);
             });
 
-            // Buat order terpisah untuk setiap penjual
             let totalOrdersCreated = 0;
             let grandTotal = 0;
 
@@ -4609,6 +4650,7 @@
                 
                 grandTotal += orderTotal;
 
+                // Buat Object Order Baru
                 const newOrder = {
                     id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 + totalOrdersCreated : 1001 + totalOrdersCreated,
                     date: new Date().toLocaleDateString('id-ID', { 
@@ -4632,55 +4674,12 @@
                     shippingMethod: shippingMethodNames[selectedShipping],
                     paymentMethod: paymentNames[selectedPayment],
                     status: 'processing',
+                    // Tracking dummy data
                     tracking: [
-                        {
-                            title: 'Pesanan Dikonfirmasi',
-                            description: 'Pesanan Anda telah dikonfirmasi',
-                            icon: 'fa-check-circle',
-                            completed: true,
-                            active: false,
-                            time: new Date().toLocaleString('id-ID')
-                        },
-                        {
-                            title: 'Sedang Diproses',
-                            description: 'Penjual sedang memproses pesanan Anda',
-                            icon: 'fa-box',
-                            completed: false,
-                            active: true,
-                            time: ''
-                        },
-                        {
-                            title: 'Dalam Pengiriman',
-                            description: 'Paket sedang dalam perjalanan',
-                            icon: 'fa-truck',
-                            completed: false,
-                            active: false,
-                            time: ''
-                        },
-                        {
-                            title: 'Tiba di Kota Tujuan',
-                            description: 'Paket telah tiba di kota tujuan',
-                            icon: 'fa-building',
-                            completed: false,
-                            active: false,
-                            time: ''
-                        },
-                        {
-                            title: 'Sedang Dikirim ke Alamat',
-                            description: 'Kurir sedang mengirim ke alamat Anda',
-                            icon: 'fa-motorcycle',
-                            completed: false,
-                            active: false,
-                            time: ''
-                        },
-                        {
-                            title: 'Pesanan Diterima',
-                            description: 'Paket telah diterima',
-                            icon: 'fa-home',
-                            completed: false,
-                            active: false,
-                            time: ''
-                        }
+                        { title: 'Pesanan Dikonfirmasi', description: 'Pesanan Anda telah dikonfirmasi', icon: 'fa-check-circle', completed: true, active: false, time: new Date().toLocaleString('id-ID') },
+                        { title: 'Sedang Diproses', description: 'Penjual sedang memproses pesanan Anda', icon: 'fa-box', completed: false, active: true, time: '' },
+                        { title: 'Dalam Pengiriman', description: 'Paket sedang dalam perjalanan', icon: 'fa-truck', completed: false, active: false, time: '' },
+                        { title: 'Pesanan Diterima', description: 'Paket telah diterima', icon: 'fa-home', completed: false, active: false, time: '' }
                     ]
                 };
 
@@ -4688,36 +4687,21 @@
                 totalOrdersCreated++;
             });
 
+            // Simpan Order & Cart ke LocalStorage
             saveOrdersToStorage();
 
-            // Kurangi stok produk yang dibeli
-            selectedItems.forEach(item => {
-                const product = products.find(p => p.id === item.product.id);
-                if (product) {
-                    product.stock -= item.quantity;
-                    
-                    // Hapus produk dari array jika stok habis
-                    if (product.stock <= 0) {
-                        products = products.filter(p => p.id !== product.id);
-                    }
-                }
-            });
-
-            // Update currentProducts
-            currentProducts = [...products];
-
-            // Hapus item yang sudah dicheckout dari cart
+            // Hapus item dari cart
             cart = cart.filter(item => !item.selected);
             saveCartToStorage();
-            updateCartUI();
             
-            // Render ulang produk untuk update tampilan
-            renderProducts();
-
+            // Update UI
+            updateCartUI();
+            renderProducts(); // Refresh tampilan produk di halaman
             closeDetailModal();
+            toggleCart(); // Tutup sidebar cart
             
             const sellerCount = Object.keys(itemsBySeller).length;
-            showNotification(`${totalOrdersCreated} pesanan berhasil dibuat dari ${sellerCount} penjual! Total: Rp ${formatPrice(grandTotal)}`);
+            showNotification(`Berhasil! Stok telah diperbarui. Total: Rp ${formatPrice(grandTotal)}`);
         }
 
         function showNotification(message) {
