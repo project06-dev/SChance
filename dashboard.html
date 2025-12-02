@@ -3727,7 +3727,8 @@
             try {
                 await initDB();
                 setupGuestMode(); // Setup guest mode if applicable
-                
+                await fetchAddressesFromFirebase();
+
                 // Load products from Firestore if logged in
                 const currentUser = localStorage.getItem('currentUser');
                 const isGuest = localStorage.getItem('isGuest') === 'true';
@@ -3769,6 +3770,7 @@
                 }
                 
                 currentProducts = [...products];
+                renderAddresses(); // Pastikan di-render ulang setelah fetch
                 renderProducts();
                 loadCartFromStorage();
                 loadWishlistFromStorage();
@@ -4412,12 +4414,41 @@
         function showCheckoutModal(selectedItems) {
             const subtotal = selectedItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
             
+            // 1. Ambil Alamat Utama (Default)
+            // Pastikan array 'addresses' sudah terisi (nanti kita perbaiki fungsi load-nya)
+            const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
+
             productModal.classList.add('active');
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
             
+            // 2. Siapkan HTML untuk bagian Alamat
+            let addressHTML = '';
+            if (defaultAddress) {
+                addressHTML = `
+                    <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--pink-dark);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="color: var(--pink-dark); margin:0;"><i class="fas fa-map-marker-alt"></i> Alamat Pengiriman</h4>
+                            <button onclick="showPage('myAddresses'); closeDetailModal();" style="font-size:12px; color: var(--gray); background:none; border:none; cursor:pointer; text-decoration:underline;">Ubah Alamat</button>
+                        </div>
+                        <div style="font-weight:600;">${defaultAddress.recipientName} (${defaultAddress.phone})</div>
+                        <div style="font-size:13px; color:var(--text); margin-top:5px;">${defaultAddress.address}</div>
+                        <div style="font-size:13px; color:var(--text);">${defaultAddress.city}, ${defaultAddress.province} ${defaultAddress.postalCode}</div>
+                    </div>
+                `;
+            } else {
+                addressHTML = `
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align:center;">
+                        <p style="color: #856404; margin-bottom:10px;">Anda belum mengatur alamat pengiriman.</p>
+                        <button class="btn-primary" onclick="showAddAddressModal();" style="font-size:12px; padding: 8px 15px;">
+                            <i class="fas fa-plus"></i> Tambah Alamat
+                        </button>
+                    </div>
+                `;
+            }
+
             modalBody.innerHTML = `
-                <div class="checkout-summary">
+                ${addressHTML} <div class="checkout-summary">
                     <h3 style="margin-bottom: 15px; color: var(--pink-dark);">
                         <i class="fas fa-shopping-bag"></i> Ringkasan Pesanan
                     </h3>
@@ -4472,16 +4503,6 @@
                             <div class="payment-desc">BCA, Mandiri, BNI, BRI</div>
                         </div>
                     </label>
-                    <label class="payment-option" onclick="selectPayment('ewallet', this)">
-                        <input type="radio" name="payment" value="ewallet">
-                        <div class="payment-icon">
-                            <i class="fas fa-wallet" style="color: #00AA13;"></i>
-                        </div>
-                        <div class="payment-info">
-                            <div class="payment-name">E-Wallet</div>
-                            <div class="payment-desc">GoPay, OVO, DANA, ShopeePay</div>
-                        </div>
-                    </label>
                     <label class="payment-option" onclick="selectPayment('cod', this)">
                         <input type="radio" name="payment" value="cod">
                         <div class="payment-icon">
@@ -4492,16 +4513,6 @@
                             <div class="payment-desc">Bayar di tempat</div>
                         </div>
                     </label>
-                    <label class="payment-option" onclick="selectPayment('cc', this)">
-                        <input type="radio" name="payment" value="cc">
-                        <div class="payment-icon">
-                            <i class="fas fa-credit-card" style="color: #4169E1;"></i>
-                        </div>
-                        <div class="payment-info">
-                            <div class="payment-name">Kartu Kredit/Debit</div>
-                            <div class="payment-desc">Visa, Mastercard, JCB</div>
-                        </div>
-                    </label>
                 </div>
 
                 <div class="price-breakdown" id="priceBreakdown">
@@ -4510,7 +4521,7 @@
 
                 <div class="form-actions">
                     <button class="btn-cancel" onclick="closeDetailModal()">Batal</button>
-                    <button class="btn-submit" onclick="confirmCheckout()">
+                    <button class="btn-submit" onclick="confirmCheckout()" ${!defaultAddress ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
                         <i class="fas fa-check-circle"></i> Konfirmasi Pembayaran
                     </button>
                 </div>
@@ -5216,7 +5227,7 @@
         }
         
 
-        function saveAddress(event) {
+        async function saveAddress(event) {
             event.preventDefault();
 
             const addressData = {
@@ -5232,44 +5243,96 @@
                 isDefault: document.getElementById('setAsDefault').checked
             };
 
-            // Validate phone number
-            if (!/^08\d{8,11}$/.test(addressData.phone)) {
-                showNotification('Nomor telepon harus dimulai dengan 08 dan 10-13 digit');
+            // Validasi sederhana
+            if (!addressData.recipientName || !addressData.phone || !addressData.address) {
+                showNotification('Harap lengkapi data wajib!');
                 return;
             }
 
-            // Validate postal code
-            if (!/^\d{5}$/.test(addressData.postalCode)) {
-                showNotification('Kode pos harus 5 digit angka');
-                return;
-            }
+            // --- LOGIKA PENYIMPANAN FIREBASE ---
+            const currentUser = localStorage.getItem('currentUser');
+            const isGuest = localStorage.getItem('isGuest') === 'true';
 
+            // Update array lokal dulu (biar tampilan langsung berubah)
             if (editingAddressId) {
-                // Edit existing address
                 const index = addresses.findIndex(a => a.id === editingAddressId);
                 if (index !== -1) {
-                    // If setting as default, unset other defaults
-                    if (addressData.isDefault) {
-                        addresses.forEach(addr => addr.isDefault = false);
-                    }
+                    if (addressData.isDefault) addresses.forEach(addr => addr.isDefault = false);
                     addresses[index] = addressData;
-                    showNotification('Alamat berhasil diperbarui!');
                 }
             } else {
-                // Add new address
-                // If this is the first address or set as default, make it default
                 if (addresses.length === 0 || addressData.isDefault) {
                     addresses.forEach(addr => addr.isDefault = false);
                     addressData.isDefault = true;
                 }
                 addresses.push(addressData);
-                showNotification('Alamat berhasil ditambahkan!');
             }
 
+            // SIMPAN KE FIREBASE
+            if (!isGuest && currentUser && window.db) {
+                try {
+                    const userData = JSON.parse(currentUser);
+                    const userEmail = userData.email;
+                    
+                    // Kita simpan di sub-collection 'addresses' milik user
+                    // Path: users/{email}/addresses/{addressId}
+                    const addressRef = window.firestoreCollection(window.db, "users", userEmail, "addresses");
+                    
+                    // Jika Edit -> Update, Jika Baru -> Add
+                    // Untuk kesederhanaan di sini kita pakai AddDoc/SetDoc
+                    // (Implementasi sederhana: simpan sebagai dokumen baru)
+                    
+                    await window.firestoreAddDoc(addressRef, {
+                        ...addressData,
+                        updatedAt: window.firestoreServerTimestamp()
+                    });
+                    
+                    console.log("Alamat berhasil disimpan ke Firebase");
+                } catch (error) {
+                    console.error("Gagal simpan ke Firebase:", error);
+                    showNotification('Gagal simpan ke server, tersimpan lokal.');
+                }
+            }
+            // -----------------------------------
+
+            // Simpan lokal juga sebagai backup/cache
             saveAddressesToStorage();
+            
             closeDetailModal();
             renderAddresses();
+            showNotification('Alamat berhasil disimpan!');
             editingAddressId = null;
+        }
+
+        async function fetchAddressesFromFirebase() {
+            const currentUser = localStorage.getItem('currentUser');
+            const isGuest = localStorage.getItem('isGuest') === 'true';
+
+            if (!isGuest && currentUser && window.db) {
+                try {
+                    const userData = JSON.parse(currentUser);
+                    const userEmail = userData.email;
+                    
+                    const q = window.firestoreQuery(
+                        window.firestoreCollection(window.db, "users", userEmail, "addresses")
+                    );
+                    
+                    const querySnapshot = await window.firestoreGetDocs(q);
+                    const firebaseAddresses = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        firebaseAddresses.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    if (firebaseAddresses.length > 0) {
+                        addresses = firebaseAddresses;
+                        saveAddressesToStorage(); // Update cache lokal
+                        console.log("Alamat dimuat dari Firebase:", addresses.length);
+                    }
+                } catch (error) {
+                    console.error("Gagal memuat alamat dari Firebase:", error);
+                }
+            }
         }
 
         function editAddress(addressId) {
