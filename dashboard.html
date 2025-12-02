@@ -4923,7 +4923,7 @@
             }
         }
 
-        function loadEditProfileForm() {
+        async function loadEditProfileForm() {
             const currentUser = localStorage.getItem('currentUser');
             if (!currentUser) {
                 showNotification('Silakan login terlebih dahulu');
@@ -4931,60 +4931,92 @@
                 return;
             }
 
-            const userData = JSON.parse(localStorage.getItem(currentUser));
-            if (userData) {
-                // 1. Nama
-                const displayNameEl = document.getElementById('displayName');
-                if(displayNameEl) displayNameEl.textContent = userData.name || 'Atur Sekarang';
+            // 1. Tampilkan Data dari LocalStorage (Sementara)
+            let userData = JSON.parse(currentUser);
+            updateEditProfileUI(userData);
 
-                // 2. Username
-                const displayUsernameEl = document.getElementById('displayUsername');
-                const username = userData.username || (userData.email ? userData.email.split('@')[0] : '-');
-                if(displayUsernameEl) displayUsernameEl.textContent = username;
-                
-                // 3. Masking Phone (******96)
-                const displayPhoneEl = document.getElementById('displayPhone');
-                const phone = userData.phone || '';
-                let maskedPhone = 'Atur Sekarang';
-                if (phone.length > 2) {
-                    // Ambil 2 digit terakhir
-                    maskedPhone = '******' + phone.slice(-2);
-                } else if (phone.length > 0) {
-                    maskedPhone = phone;
-                }
-                if(displayPhoneEl) displayPhoneEl.textContent = maskedPhone;
-                
-                // 4. Masking Email (u***r@gmail.com)
-                const displayEmailEl = document.getElementById('displayEmail');
-                const email = userData.email || '';
-                let maskedEmail = '-';
-                
-                if (email.includes('@')) {
-                    const [name, domain] = email.split('@');
-                    if (name.length > 2) {
-                        // Huruf pertama + *** + Huruf terakhir sebelum @ + domain
-                        maskedEmail = `${name[0]}***${name[name.length - 1]}@${domain}`;
-                    } else {
-                        // Jika nama email sangat pendek (misal: a@gmail.com atau ab@gmail.com)
-                        maskedEmail = `${name[0]}***@${domain}`;
+            // 2. Ambil Data Terbaru dari Firebase (Agar Sinkron)
+            if (window.db && window.firestoreCollection && window.firestoreGetDocs) {
+                try {
+                    const usersRef = window.firestoreCollection(window.db, "users");
+                    // Query berdasarkan email
+                    const q = window.firestoreQuery(usersRef, window.where("email", "==", userData.email));
+                    const querySnapshot = await window.firestoreGetDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        const docData = querySnapshot.docs[0].data();
+                        // Gabungkan data lokal dengan data server
+                        userData = { ...userData, ...docData };
+                        
+                        // Simpan yang terbaru ke LocalStorage
+                        localStorage.setItem('currentUser', JSON.stringify(userData));
+                        
+                        // Update Tampilan lagi dengan data server
+                        updateEditProfileUI(userData);
                     }
+                } catch (error) {
+                    console.log("Gagal memuat data live, menggunakan data cache.");
                 }
-                if(displayEmailEl) displayEmailEl.textContent = maskedEmail;
+            }
+        }
+
+        // Fungsi Pembantu untuk Update UI & Sensor Data
+        function updateEditProfileUI(userData) {
+            // 1. Nama
+            const displayNameEl = document.getElementById('displayName');
+            if(displayNameEl) displayNameEl.textContent = userData.name || 'Atur Sekarang';
+
+            // 2. Username
+            const displayUsernameEl = document.getElementById('displayUsername');
+            const username = userData.username || (userData.email ? userData.email.split('@')[0] : '-');
+            if(displayUsernameEl) displayUsernameEl.textContent = username;
+            
+            // 3. Sensor No Handphone (******99)
+            const displayPhoneEl = document.getElementById('displayPhone');
+            const phone = userData.phone;
+            
+            if (phone && phone.length > 2) {
+                // Ambil 2 angka terakhir
+                const lastTwo = phone.slice(-2);
+                displayPhoneEl.textContent = `******${lastTwo}`;
+            } else {
+                displayPhoneEl.textContent = 'Atur Sekarang';
+            }
+            
+            // 4. Sensor Email (h***a@gmail.com)
+            const displayEmailEl = document.getElementById('displayEmail');
+            const email = userData.email || '';
+            
+            if (email.includes('@')) {
+                const [name, domain] = email.split('@');
+                let maskedName = name;
                 
-                // 5. Tanggal Lahir
-                const displayDobEl = document.getElementById('displayDob');
-                const dob = userData.dob || '';
-                if (dob) {
-                    const dobDate = new Date(dob);
-                    const formattedDob = dobDate.toLocaleDateString('id-ID', { 
-                        day: '2-digit', 
-                        month: 'long', 
-                        year: 'numeric' 
-                    });
-                    if(displayDobEl) displayDobEl.textContent = formattedDob;
+                if (name.length > 2) {
+                    // Huruf pertama + *** + Huruf terakhir + @domain
+                    maskedName = `${name[0]}***${name[name.length - 1]}`;
                 } else {
-                    if(displayDobEl) displayDobEl.textContent = 'Atur Sekarang';
+                    // Jika nama email pendek (misal: ab@gmail.com) -> a***@gmail.com
+                    maskedName = `${name[0]}***`;
                 }
+                displayEmailEl.textContent = `${maskedName}@${domain}`;
+            } else {
+                displayEmailEl.textContent = email;
+            }
+            
+            // 5. Tanggal Lahir
+            const displayDobEl = document.getElementById('displayDob');
+            const dob = userData.dob;
+            
+            if (dob) {
+                const dobDate = new Date(dob);
+                const formattedDob = dobDate.toLocaleDateString('id-ID', { 
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                if(displayDobEl) displayDobEl.textContent = formattedDob;
+            } else {
+                if(displayDobEl) displayDobEl.textContent = 'Atur Sekarang';
             }
         }
 
