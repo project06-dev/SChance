@@ -3455,6 +3455,7 @@
         }
 
         // Render My Products
+        // Render My Products
         function renderMyProducts() {
             const myProductsContainer = document.getElementById('myProductsContainer');
             const myProducts = products.filter(p => p.isMine);
@@ -3500,9 +3501,6 @@
                         </div>
                     </div>
                     <div class="my-product-actions">
-                        <button class="btn-edit" onclick="editProduct(${product.id})">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
                         <button class="btn-delete" onclick="deleteProduct(${product.id})">
                             <i class="fas fa-trash"></i> Hapus
                         </button>
