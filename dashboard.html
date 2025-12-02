@@ -2937,51 +2937,63 @@
 
         // Page Navigation Functions
         function showPage(pageName) {
-            // Hide all pages
+            // --- 1. LOGIKA BARU: TUTUP KERANJANG & MODAL OTOMATIS ---
+            // Setiap kali pindah tab, kita pastikan keranjang tertutup
+            const cartSidebar = document.getElementById('cartSidebar');
+            const overlay = document.getElementById('overlay');
+            const productModal = document.getElementById('productModal');
+            
+            if (cartSidebar) cartSidebar.classList.remove('active');
+            if (productModal) productModal.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+            document.body.style.overflow = ''; // Kembalikan scroll agar bisa digerakkan
+            // --------------------------------------------------------
+
+            // 2. Sembunyikan semua halaman
             document.querySelectorAll('.page-section').forEach(page => {
                 page.classList.remove('active');
             });
 
-            // Update bottom nav active state
+            // 3. Reset status aktif di navigasi bawah
             document.querySelectorAll('.bottom-nav-item').forEach(item => {
                 item.classList.remove('active');
             });
 
-            // Show/Hide category nav based on page
+            // 4. Atur tampilan Header (Search bar, kategori)
             const categoryNav = document.getElementById('categoryNav');
-            if (pageName === 'home') {
-                categoryNav.style.display = 'block';
-            } else {
-                categoryNav.style.display = 'none';
-            }
-
-            // Show/Hide search bar and user actions based on page
             const searchBar = document.querySelector('.search-bar');
             const userActions = document.querySelector('.user-actions');
+
             if (pageName === 'home') {
-                searchBar.style.display = 'flex';
-                userActions.style.display = 'flex';
+                if(categoryNav) categoryNav.style.display = 'block';
+                if(searchBar) searchBar.style.display = 'flex';
+                if(userActions) userActions.style.display = 'flex';
             } else {
-                searchBar.style.display = 'none';
-                userActions.style.display = 'none';
+                if(categoryNav) categoryNav.style.display = 'none';
+                if(searchBar) searchBar.style.display = 'none';
+                if(userActions) userActions.style.display = 'none';
             }
 
-            // Show selected page
+            // 5. Tampilkan Halaman yang Dipilih
             currentPage = pageName;
             
             switch(pageName) {
                 case 'home':
                     document.getElementById('homePage').classList.add('active');
-                    document.querySelector('.bottom-nav-item[onclick*="home"]').classList.add('active');
+                    // Cari tombol navigasi yang punya onclick='showPage("home")'
+                    const homeBtn = document.querySelector('.bottom-nav-item[onclick*="home"]');
+                    if(homeBtn) homeBtn.classList.add('active');
                     break;
                 case 'jual':
                     document.getElementById('jualPage').classList.add('active');
-                    document.querySelector('.bottom-nav-item[onclick*="jual"]').classList.add('active');
+                    const jualBtn = document.querySelector('.bottom-nav-item[onclick*="jual"]');
+                    if(jualBtn) jualBtn.classList.add('active');
                     loadSellerInfoFromAddress();
                     break;
                 case 'profile':
                     document.getElementById('profilePage').classList.add('active');
-                    document.querySelector('.bottom-nav-item[onclick*="profile"]').classList.add('active');
+                    const profileBtn = document.querySelector('.bottom-nav-item[onclick*="profile"]');
+                    if(profileBtn) profileBtn.classList.add('active');
                     loadUserProfile();
                     break;
                 case 'myProducts':
@@ -3010,7 +3022,7 @@
                     break;
             }
 
-            // Scroll to top
+            // Scroll ke paling atas saat pindah halaman
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
