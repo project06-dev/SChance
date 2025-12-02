@@ -1553,6 +1553,14 @@
             transition: background-color 0.3s;
         }
 
+        /* Tambahkan ini di dalam tag <style> Anda */
+        .profile-menu-item .menu-value {
+            color: var(--gray);
+            font-size: 14px;
+            margin-right: 10px;
+            text-align: right;
+        }
+
         .profile-menu-item:last-child {
             border-bottom: none;
         }
@@ -2588,7 +2596,6 @@
     <!-- EDIT PROFILE PAGE -->
     <div id="editProfilePage" class="page-section">
         <section class="container profile-page">
-            <!-- Header dengan tombol back -->
             <div style="display: flex; align-items: center; padding: 20px 0 10px; gap: 15px;">
                 <button onclick="showPage('profile')" style="background: transparent; border: none; color: var(--pink-dark); font-size: 24px; cursor: pointer; padding: 5px; width: auto;">
                     <i class="fas fa-arrow-left"></i>
@@ -2596,48 +2603,48 @@
                 <h2 style="margin: 0; font-size: 24px; color: var(--text); font-weight: 700;">Akun dan Keamanan</h2>
             </div>
 
-            <!-- Section Header -->
             <div style="background: var(--gray-light); padding: 10px 15px; margin: 20px 0 0; font-size: 14px; color: var(--gray); font-weight: 600;">
                 Akun
             </div>
 
-            <!-- Profile Menu Items -->
             <div class="profile-menu" style="margin-top: 0; border-radius: 0;">
+                
                 <div class="profile-menu-item" onclick="editProfileField('name')">
                     <div class="menu-text">
                         <h4 style="font-weight: 500; color: var(--text);">Profil Saya</h4>
                     </div>
+                    <span id="displayName" class="menu-value" style="color: var(--gray); font-size: 14px; margin-right: 10px; text-align: right;">-</span>
                     <i class="fas fa-chevron-right menu-arrow"></i>
                 </div>
 
                 <div class="profile-menu-item" onclick="editProfileField('username')">
-                    <div class="menu-text" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div class="menu-text">
                         <h4 style="font-weight: 500; color: var(--text);">Username</h4>
-                        <span id="displayUsername" style="color: var(--gray); font-size: 14px; margin-right: 10px;">-</span>
                     </div>
+                    <span id="displayUsername" class="menu-value" style="color: var(--gray); font-size: 14px; margin-right: 10px; text-align: right;">-</span>
                     <i class="fas fa-chevron-right menu-arrow"></i>
                 </div>
 
                 <div class="profile-menu-item" onclick="editProfileField('phone')">
-                    <div class="menu-text" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div class="menu-text">
                         <h4 style="font-weight: 500; color: var(--text);">No. Handphone</h4>
-                        <span id="displayPhone" style="color: var(--gray); font-size: 14px; margin-right: 10px;">******96</span>
                     </div>
+                    <span id="displayPhone" class="menu-value" style="color: var(--gray); font-size: 14px; margin-right: 10px; text-align: right;">******</span>
                     <i class="fas fa-chevron-right menu-arrow"></i>
                 </div>
 
-                <div class="profile-menu-item" onclick="editProfileField('email')">
-                    <div class="menu-text" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="profile-menu-item" style="cursor: default;">
+                    <div class="menu-text">
                         <h4 style="font-weight: 500; color: var(--text);">Email</h4>
-                        <span style="color: #ff6b6b; font-size: 13px; margin-right: 10px;">Atur Sekarang</span>
                     </div>
-                    <i class="fas fa-chevron-right menu-arrow"></i>
-                </div>
+                    <span id="displayEmail" class="menu-value" style="color: var(--gray); font-size: 14px; margin-right: 10px; text-align: right;">-</span>
+                    </div>
 
                 <div class="profile-menu-item">
                     <div class="menu-text">
                         <h4 style="font-weight: 500; color: var(--text);">Akun Media Sosial</h4>
                     </div>
+                    <span class="menu-value" style="font-size: 12px; color: #aaa; margin-right: 10px;">Belum terhubung</span>
                     <i class="fas fa-chevron-right menu-arrow"></i>
                 </div>
 
@@ -2645,14 +2652,15 @@
                     <div class="menu-text">
                         <h4 style="font-weight: 500; color: var(--text);">Ganti Password</h4>
                     </div>
+                    <span class="menu-value" style="color: var(--gray); font-size: 14px; margin-right: 10px;">**********</span>
                     <i class="fas fa-chevron-right menu-arrow"></i>
                 </div>
 
                 <div class="profile-menu-item" onclick="editProfileField('dob')">
-                    <div class="menu-text" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div class="menu-text">
                         <h4 style="font-weight: 500; color: var(--text);">Tanggal Lahir</h4>
-                        <span id="displayDob" style="color: var(--gray); font-size: 14px; margin-right: 10px;">-</span>
                     </div>
+                    <span id="displayDob" class="menu-value" style="color: var(--gray); font-size: 14px; margin-right: 10px; text-align: right;">-</span>
                     <i class="fas fa-chevron-right menu-arrow"></i>
                 </div>
             </div>
@@ -4869,24 +4877,49 @@
 
         // ========== PROFILE FUNCTIONS ==========
         
-        function loadUserProfile() {
+        async function loadUserProfile() {
             const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) {
-                document.querySelector('.profile-name').textContent = 'Pengguna Second Chance';
-                document.querySelector('.profile-email').textContent = 'user@secondchance.com';
+            const isGuest = localStorage.getItem('isGuest') === 'true';
+
+            // Default tampilan jika belum ada data
+            const profileNameEl = document.querySelector('.profile-name');
+            const profileEmailEl = document.querySelector('.profile-email');
+
+            if (isGuest || !currentUser) {
+                profileNameEl.textContent = 'Guest User';
+                profileEmailEl.textContent = 'Silakan login untuk akses penuh';
                 return;
             }
 
-            try {
-                const userData = JSON.parse(currentUser);
-                if (userData) {
-                    document.querySelector('.profile-name').textContent = userData.name || 'Pengguna Second Chance';
-                    document.querySelector('.profile-email').textContent = userData.email || 'user@secondchance.com';
+            // Load data dari LocalStorage dulu (biar cepat muncul)
+            let userData = JSON.parse(currentUser);
+            profileNameEl.textContent = userData.name || 'Pengguna';
+            profileEmailEl.textContent = userData.email;
+
+            // Lalu Load data Terupdate dari Firebase (Background sync)
+            if (window.db && window.firestoreDoc && window.firestoreGetDocs) {
+                try {
+                    // Asumsi: Data user disimpan di collection 'users' dengan ID = email user
+                    // Jika Anda menggunakan UID saat register, ganti userData.email dengan userData.uid
+                    const userRef = window.firestoreCollection(window.db, "users");
+                    const q = window.firestoreQuery(userRef, window.where("email", "==", userData.email));
+                    
+                    const querySnapshot = await window.firestoreGetDocs(q);
+                    
+                    if (!querySnapshot.empty) {
+                        const docData = querySnapshot.docs[0].data();
+                        const docId = querySnapshot.docs[0].id;
+                        
+                        // Update UI dengan data terbaru dari server
+                        profileNameEl.textContent = docData.name || userData.name;
+                        
+                        // Update LocalStorage agar sinkron
+                        const newUserData = { ...userData, ...docData, firestoreId: docId };
+                        localStorage.setItem('currentUser', JSON.stringify(newUserData));
+                    }
+                } catch (error) {
+                    console.log("Menggunakan data lokal profil.");
                 }
-            } catch (error) {
-                console.error('Error loading user profile:', error);
-                document.querySelector('.profile-name').textContent = 'Pengguna Second Chance';
-                document.querySelector('.profile-email').textContent = 'user@secondchance.com';
             }
         }
 
@@ -4900,16 +4933,46 @@
 
             const userData = JSON.parse(localStorage.getItem(currentUser));
             if (userData) {
-                // Update display values - gunakan username dari data user
+                // 1. Nama
+                const displayNameEl = document.getElementById('displayName');
+                if(displayNameEl) displayNameEl.textContent = userData.name || 'Atur Sekarang';
+
+                // 2. Username
+                const displayUsernameEl = document.getElementById('displayUsername');
                 const username = userData.username || (userData.email ? userData.email.split('@')[0] : '-');
-                document.getElementById('displayUsername').textContent = username;
+                if(displayUsernameEl) displayUsernameEl.textContent = username;
                 
-                // Mask phone number
+                // 3. Masking Phone (******96)
+                const displayPhoneEl = document.getElementById('displayPhone');
                 const phone = userData.phone || '';
-                const maskedPhone = phone ? '******' + phone.slice(-2) : '******96';
-                document.getElementById('displayPhone').textContent = maskedPhone;
+                let maskedPhone = 'Atur Sekarang';
+                if (phone.length > 2) {
+                    // Ambil 2 digit terakhir
+                    maskedPhone = '******' + phone.slice(-2);
+                } else if (phone.length > 0) {
+                    maskedPhone = phone;
+                }
+                if(displayPhoneEl) displayPhoneEl.textContent = maskedPhone;
                 
-                // Format date
+                // 4. Masking Email (u***r@gmail.com)
+                const displayEmailEl = document.getElementById('displayEmail');
+                const email = userData.email || '';
+                let maskedEmail = '-';
+                
+                if (email.includes('@')) {
+                    const [name, domain] = email.split('@');
+                    if (name.length > 2) {
+                        // Huruf pertama + *** + Huruf terakhir sebelum @ + domain
+                        maskedEmail = `${name[0]}***${name[name.length - 1]}@${domain}`;
+                    } else {
+                        // Jika nama email sangat pendek (misal: a@gmail.com atau ab@gmail.com)
+                        maskedEmail = `${name[0]}***@${domain}`;
+                    }
+                }
+                if(displayEmailEl) displayEmailEl.textContent = maskedEmail;
+                
+                // 5. Tanggal Lahir
+                const displayDobEl = document.getElementById('displayDob');
                 const dob = userData.dob || '';
                 if (dob) {
                     const dobDate = new Date(dob);
@@ -4918,55 +4981,50 @@
                         month: 'long', 
                         year: 'numeric' 
                     });
-                    document.getElementById('displayDob').textContent = formattedDob;
+                    if(displayDobEl) displayDobEl.textContent = formattedDob;
                 } else {
-                    document.getElementById('displayDob').textContent = '-';
+                    if(displayDobEl) displayDobEl.textContent = 'Atur Sekarang';
                 }
             }
         }
 
-        function editProfileField(fieldType) {
+       function editProfileField(fieldType) {
             const currentUser = localStorage.getItem('currentUser');
             if (!currentUser) {
                 showNotification('Silakan login terlebih dahulu');
                 return;
             }
 
-            const userData = JSON.parse(localStorage.getItem(currentUser));
-            if (!userData) {
-                showNotification('Data user tidak ditemukan');
-                return;
-            }
-
+            const userData = JSON.parse(currentUser);
+            
             let title = '';
             let currentValue = '';
             let inputType = 'text';
             let placeholder = '';
-            let isEditable = true;
+            let isEditable = true; // Flag untuk menentukan apakah boleh diedit
 
             switch(fieldType) {
                 case 'name':
-                    title = 'Profil Saya';
+                    title = 'Nama Lengkap';
                     currentValue = userData.name || '';
                     placeholder = 'Masukkan nama lengkap';
                     break;
                 case 'username':
                     title = 'Username';
-                    currentValue = userData.email ? userData.email.split('@')[0] : '';
+                    currentValue = userData.username || '';
                     placeholder = 'Masukkan username';
                     break;
                 case 'phone':
                     title = 'No. Handphone';
                     currentValue = userData.phone || '';
                     inputType = 'tel';
-                    placeholder = 'Masukkan nomor handphone';
+                    placeholder = 'Contoh: 08123456789';
                     break;
                 case 'email':
                     title = 'Email';
                     currentValue = userData.email || '';
                     inputType = 'email';
-                    placeholder = 'Masukkan email';
-                    isEditable = false;
+                    isEditable = false; // KUNCI EMAIL DISINI
                     break;
                 case 'dob':
                     title = 'Tanggal Lahir';
@@ -4974,11 +5032,11 @@
                     inputType = 'date';
                     break;
                 case 'password':
-                    showNotification('Fitur ganti password akan segera hadir!');
+                    showNotification('Fitur ganti password belum tersedia saat ini.');
                     return;
             }
 
-            // Show modal for editing
+            // Tampilkan Modal
             productModal.classList.add('active');
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -4996,64 +5054,83 @@
                                    id="editFieldInput" 
                                    value="${currentValue}" 
                                    placeholder="${placeholder}"
-                                   ${!isEditable ? 'disabled' : 'required'}
-                                   style="${!isEditable ? 'background-color: var(--gray-light); cursor: not-allowed;' : ''}">
-                            ${!isEditable ? '<small style="color: var(--gray); font-size: 12px; margin-top: 5px; display: block;">Email tidak dapat diubah</small>' : ''}
+                                   ${!isEditable ? 'disabled' : 'required'} 
+                                   style="${!isEditable ? 'background-color: #f0f0f0; color: #999; cursor: not-allowed; border-color: #ddd;' : ''}">
+                            
+                            ${!isEditable ? 
+                                '<small style="color: #ff6b6b; font-size: 12px; margin-top: 5px; display: block;"><i class="fas fa-lock"></i> Email tidak dapat diubah karena terdaftar sebagai akun utama.</small>' 
+                                : ''}
                         </div>
                         
                         <div class="form-actions">
                             <button type="button" class="btn-cancel" onclick="closeDetailModal()">Batal</button>
-                            ${isEditable ? '<button type="submit" class="btn-submit">Simpan</button>' : ''}
+                            ${isEditable ? '<button type="submit" class="btn-submit">Simpan Perubahan</button>' : ''}
                         </div>
                     </form>
                 </div>
             `;
         }
 
-        function saveFieldChange(event, fieldType) {
+        async function saveFieldChange(event, fieldType) {
             event.preventDefault();
 
+            // 1. Ambil Data User & Input Baru
             const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) {
-                showNotification('Silakan login terlebih dahulu');
-                return;
-            }
+            if (!currentUser) return;
 
-            const userData = JSON.parse(localStorage.getItem(currentUser));
-            if (!userData) {
-                showNotification('Data user tidak ditemukan');
-                return;
-            }
-
+            let userData = JSON.parse(currentUser);
             const newValue = document.getElementById('editFieldInput').value.trim();
 
-            // Update data based on field type
-            switch(fieldType) {
-                case 'name':
-                    userData.name = newValue;
-                    break;
-                case 'username':
-                    // Username is derived from email, so we don't update it separately
-                    showNotification('Username tidak dapat diubah');
-                    return;
-                case 'phone':
-                    userData.phone = newValue;
-                    break;
-                case 'dob':
-                    userData.dob = newValue;
-                    break;
+            // 2. Cegah update jika Email (Keamanan ganda)
+            if (fieldType === 'email') {
+                showNotification('Email tidak dapat diubah!');
+                return;
             }
 
-            // Save to localStorage
-            localStorage.setItem(currentUser, JSON.stringify(userData));
+            // 3. Update Object User Data (Lokal)
+            userData[fieldType] = newValue;
 
-            showNotification('Data berhasil diperbarui!');
-            closeDetailModal();
+            showNotification('Menyimpan perubahan...');
+
+            // 4. SIMPAN KE FIREBASE
+            if (window.db && window.firestoreCollection && window.firestoreQuery && window.firestoreGetDocs && window.firestoreUpdateDoc) {
+                try {
+                    // Cari dokumen user berdasarkan email
+                    const usersRef = window.firestoreCollection(window.db, "users");
+                    const q = window.firestoreQuery(usersRef, window.where("email", "==", userData.email));
+                    const querySnapshot = await window.firestoreGetDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        // Jika dokumen ditemukan, Update
+                        const userDoc = querySnapshot.docs[0].ref;
+                        await window.firestoreUpdateDoc(userDoc, {
+                            [fieldType]: newValue, // Dynamic key update
+                            updatedAt: window.firestoreServerTimestamp()
+                        });
+                    } else {
+                        // Jika dokumen belum ada (kasus jarang), Buat baru
+                        await window.firestoreAddDoc(usersRef, {
+                            email: userData.email,
+                            [fieldType]: newValue,
+                            createdAt: window.firestoreServerTimestamp()
+                        });
+                    }
+                    console.log('Data berhasil disimpan ke Firebase');
+                } catch (error) {
+                    console.error("Gagal update Firebase:", error);
+                    showNotification('Gagal sinkron ke server, menyimpan secara lokal.');
+                }
+            }
+
+            // 5. Simpan ke LocalStorage & Update Tampilan
+            localStorage.setItem('currentUser', JSON.stringify(userData));
             
-            // Reload the edit profile page to show updated values
-            setTimeout(() => {
-                loadEditProfileForm();
-            }, 500);
+            // Update tampilan di halaman Edit Profile
+            if (fieldType === 'name') loadUserProfile(); // Update nama di header profil
+            loadEditProfileForm(); // Refresh list menu
+
+            showNotification('Profil berhasil diperbarui!');
+            closeDetailModal();
         }
 
         function logout() {
