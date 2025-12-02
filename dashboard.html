@@ -2197,6 +2197,7 @@
         window.auth = getAuth(app);
         window.db = getFirestore(app);
         window.rtdb = getDatabase(app);
+        window.firestoreWhere = where;
         
         // Export Firestore functions to window for use in inline scripts
         window.firestoreCollection = collection;
@@ -3003,14 +3004,16 @@
         // Order Tracking Functions
         function renderOrderTracking() {
             const orderTrackingContainer = document.getElementById('orderTrackingContainer');
-            loadOrdersFromStorage();
+            // Filter: Hanya tampilkan yang BELUM selesai (delivered)
+            // Agar yang sudah selesai masuk ke Riwayat Pesanan saja
+            const activeOrders = orders.filter(o => o.status !== 'delivered');
 
-            if (orders.length === 0) {
+            if (activeOrders.length === 0) {
                 orderTrackingContainer.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-shipping-fast"></i>
-                        <h3>Belum Ada Pesanan</h3>
-                        <p>Anda belum melakukan pembelian</p>
+                        <h3>Tidak Ada Pesanan Aktif</h3>
+                        <p>Semua pesanan Anda telah selesai atau Anda belum berbelanja.</p>
                         <button class="btn btn-primary" onclick="showPage('home')" style="margin-top: 20px;">
                             <i class="fas fa-shopping-bag"></i> Mulai Belanja
                         </button>
@@ -3020,19 +3023,22 @@
             }
 
             orderTrackingContainer.innerHTML = '';
-            orders.forEach(order => {
+            
+            activeOrders.forEach(order => {
                 const orderCard = document.createElement('div');
                 orderCard.className = 'order-card';
                 
-                const statusClass = order.status === 'delivered' ? 'delivered' : 
-                                  order.status === 'shipped' ? 'shipped' : 'processing';
-                const statusText = order.status === 'delivered' ? 'Terkirim' : 
-                                 order.status === 'shipped' ? 'Dalam Pengiriman' : 'Diproses';
+                // Tentukan class badge
+                const statusClass = order.status === 'shipped' ? 'shipped' : 'processing';
+                const statusText = order.status === 'shipped' ? 'Dalam Pengiriman' : 'Sedang Diproses';
                 
+                // Gunakan ID yang aman untuk ditampilkan (jika ID firebase panjang, potong saja)
+                const displayId = order.id.toString().length > 10 ? '...' + order.id.toString().slice(-6) : order.id;
+
                 orderCard.innerHTML = `
                     <div class="order-header">
                         <div>
-                            <div class="order-id">Order #${order.id}</div>
+                            <div class="order-id">Order #${displayId}</div>
                             <div class="order-date">${order.date}</div>
                         </div>
                         <div class="status-badge ${statusClass}">${statusText}</div>
@@ -3053,26 +3059,18 @@
                             `).join('')}
                         </div>
                         <div class="order-summary">
-                            <div class="order-summary-row">
-                                <span>Subtotal:</span>
-                                <span>Rp ${formatPrice(order.subtotal)}</span>
-                            </div>
-                            <div class="order-summary-row">
-                                <span>Ongkir (${order.shippingMethod}):</span>
-                                <span>Rp ${formatPrice(order.shippingCost)}</span>
-                            </div>
-                            <div class="order-summary-row">
-                                <span>Biaya Layanan:</span>
-                                <span>Rp ${formatPrice(order.serviceFee)}</span>
-                            </div>
                             <div class="order-summary-row total">
-                                <span>Total:</span>
+                                <span>Total Belanja:</span>
                                 <span>Rp ${formatPrice(order.total)}</span>
                             </div>
                         </div>
-                        <div class="order-actions">
-                            <button class="btn-track" onclick="showOrderDetail(${order.id})">
-                                <i class="fas fa-map-marked-alt"></i> Lihat Detail Tracking
+                        <div class="order-actions" style="flex-wrap: wrap;">
+                            <button class="btn-track" onclick="showOrderDetail('${order.id}')" style="background: var(--gray-light); color: var(--text);">
+                                <i class="fas fa-map-marked-alt"></i> Lacak
+                            </button>
+                            
+                            <button class="btn-primary" onclick="markOrderAsReceived('${order.id}')" style="flex: 1; background: #28a745;">
+                                <i class="fas fa-check-circle"></i> Pesanan Diterima
                             </button>
                         </div>
                     </div>
@@ -3348,22 +3346,19 @@
                     <h4 style="color: var(--pink-dark); margin-bottom: 15px;">Status Pengiriman</h4>
                     <div class="tracking-timeline">
                         ${order.tracking.map((step, index) => `
-                            <div class="tracking-step ${step.completed ? 'completed' : ''} ${step.active ? 'active' : ''}">
-                                <div class="tracking-icon">
-                                    <i class="fas ${step.icon}"></i>
-                                </div>
-                                <div class="tracking-content">
-                                    <div class="tracking-title">${step.title}</div>
-                                    <div class="tracking-desc">${step.description}</div>
-                                    ${step.time ? `<div class="tracking-time">${step.time}</div>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
                     </div>
 
-                    <div style="margin-top: 30px;">
-                        <button class="btn-primary" onclick="closeDetailModal()" style="width: 100%;">
-                            <i class="fas fa-check"></i> Tutup
+                    <div style="margin-top: 30px; display:flex; gap:10px; flex-direction: column;">
+                        
+                        ${order.status !== 'delivered' ? `
+                            <button class="btn-submit" onclick="markOrderAsReceived('${order.id}'); closeDetailModal();" style="width: 100%; background-color: #28a745;">
+                                <i class="fas fa-box-open"></i> Konfirmasi Pesanan Diterima
+                            </button>
+                        ` : ''}
+
+                        <button class="btn-cancel" onclick="closeDetailModal()" style="width: 100%;">
+                            Tutup
                         </button>
                     </div>
                 </div>
@@ -3736,6 +3731,7 @@
                 await initDB();
                 setupGuestMode(); // Setup guest mode if applicable
                 await fetchAddressesFromFirebase();
+                await fetchOrdersFromFirebase();
 
                 // Load products from Firestore if logged in
                 const currentUser = localStorage.getItem('currentUser');
@@ -3783,6 +3779,7 @@
                 loadCartFromStorage();
                 loadWishlistFromStorage();
                 updateCartUI();
+                renderAddresses();
 
                 categoryFilters.forEach(filter => {
                     filter.addEventListener('click', function(e) {
@@ -4586,99 +4583,60 @@
         // Ganti fungsi confirmCheckout yang lama dengan yang ini:
         async function confirmCheckout() {
             // Cek batasan Guest
-            if (!checkGuestRestriction('melakukan checkout')) {
-                return;
-            }
+            if (!checkGuestRestriction('melakukan checkout')) return;
+
+            const currentUserStr = localStorage.getItem('currentUser');
+            if (!currentUserStr) return;
+            const userData = JSON.parse(currentUserStr);
 
             const selectedItems = cart.filter(item => item.selected);
-            
             if (selectedItems.length === 0) {
                 showNotification('Pilih minimal 1 produk untuk checkout');
                 return;
             }
 
-            // Tampilkan loading (opsional, biar user tahu sedang proses)
             showNotification('Sedang memproses transaksi...');
 
-            const shippingCosts = {
-                'regular': 15000,
-                'express': 25000,
-                'sameday': 40000
-            };
+            const shippingCosts = { 'regular': 15000, 'express': 25000, 'sameday': 40000 };
+            const paymentNames = { 'transfer': 'Transfer Bank', 'ewallet': 'E-Wallet', 'cod': 'COD', 'cc': 'Kartu Kredit' };
+            const shippingMethodNames = { 'regular': 'Reguler', 'express': 'Express', 'sameday': 'Same Day' };
 
-            const paymentNames = {
-                'transfer': 'Transfer Bank',
-                'ewallet': 'E-Wallet',
-                'cod': 'COD (Cash on Delivery)',
-                'cc': 'Kartu Kredit/Debit'
-            };
-
-            const shippingMethodNames = {
-                'regular': 'Reguler',
-                'express': 'Express',
-                'sameday': 'Same Day'
-            };
-
-            // --- UPDATE STOK KE FIREBASE (BAGIAN BARU) ---
-            // Kita loop semua barang yang dibeli
+            // --- 1. KURANGI STOK DI FIREBASE ---
             for (const item of selectedItems) {
-                // 1. Update tampilan lokal (biar cepat)
                 const product = products.find(p => p.id === item.product.id);
-                if (product) {
-                    product.stock -= item.quantity;
-                }
+                if (product) product.stock -= item.quantity; // Update tampilan lokal
 
-                // 2. UPDATE DATABASE SERVER (Agar user lain lihat stok berkurang)
-                // Cek apakah ini produk yang ada di database (memiliki firestoreId)
-                if (item.product.firestoreId && window.db && window.firestoreDoc && window.firestoreUpdateDoc) {
+                if (item.product.firestoreId && window.db) {
                     try {
                         const productRef = window.firestoreDoc(window.db, "products", item.product.firestoreId);
-                        
-                        // Perintah ke Firebase: "Kurangi stok sekarang juga!"
-                        await window.firestoreUpdateDoc(productRef, {
-                            // Menggunakan stok baru hasil pengurangan
-                            stock: product.stock 
-                        });
-                        console.log(`Stok ${item.product.name} berhasil diupdate di database.`);
-                    } catch (error) {
-                        console.error("Gagal update stok di database:", error);
-                    }
+                        await window.firestoreUpdateDoc(productRef, { stock: product.stock });
+                    } catch (e) { console.error("Gagal update stok:", e); }
                 }
             }
-            // ---------------------------------------------
 
-            // Kelompokkan items berdasarkan penjual untuk pembuatan Order
+            // --- 2. BUAT & SIMPAN ORDER KE FIREBASE ---
+            // Kelompokkan item per penjual
             const itemsBySeller = {};
             selectedItems.forEach(item => {
                 const seller = item.product.seller;
-                if (!itemsBySeller[seller]) {
-                    itemsBySeller[seller] = [];
-                }
+                if (!itemsBySeller[seller]) itemsBySeller[seller] = [];
                 itemsBySeller[seller].push(item);
             });
 
-            let totalOrdersCreated = 0;
-            let grandTotal = 0;
-
-            Object.keys(itemsBySeller).forEach(seller => {
+            // Loop setiap penjual untuk buat order terpisah
+            for (const seller of Object.keys(itemsBySeller)) {
                 const sellerItems = itemsBySeller[seller];
                 const sellerSubtotal = sellerItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
                 const shippingCost = shippingCosts[selectedShipping];
                 const serviceFee = 5000;
                 const orderTotal = sellerSubtotal + shippingCost + serviceFee;
-                
-                grandTotal += orderTotal;
 
-                // Buat Object Order Baru
+                // Data Order
                 const newOrder = {
-                    id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 + totalOrdersCreated : 1001 + totalOrdersCreated,
-                    date: new Date().toLocaleDateString('id-ID', { 
-                        day: '2-digit', 
-                        month: 'long', 
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    }),
+                    userId: userData.email, // PENTING: Identitas pembeli
+                    buyerName: userData.name || 'User',
+                    date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    createdAt: Date.now(), // Timestamp untuk sorting
                     items: sellerItems.map(item => ({
                         name: item.product.name,
                         image: item.product.image,
@@ -4693,7 +4651,6 @@
                     shippingMethod: shippingMethodNames[selectedShipping],
                     paymentMethod: paymentNames[selectedPayment],
                     status: 'processing',
-                    // Tracking dummy data
                     tracking: [
                         { title: 'Pesanan Dikonfirmasi', description: 'Pesanan Anda telah dikonfirmasi', icon: 'fa-check-circle', completed: true, active: false, time: new Date().toLocaleString('id-ID') },
                         { title: 'Sedang Diproses', description: 'Penjual sedang memproses pesanan Anda', icon: 'fa-box', completed: false, active: true, time: '' },
@@ -4702,25 +4659,30 @@
                     ]
                 };
 
-                orders.unshift(newOrder);
-                totalOrdersCreated++;
-            });
+                // SIMPAN KE FIREBASE (Collection 'orders')
+                if (window.db) {
+                    try {
+                        const docRef = await window.firestoreAddDoc(window.firestoreCollection(window.db, 'orders'), newOrder);
+                        // Tambahkan ID dari firebase ke object lokal agar bisa ditracking langsung
+                        newOrder.id = docRef.id; 
+                        orders.unshift(newOrder); // Masukkan ke array lokal
+                    } catch (error) {
+                        console.error("Gagal membuat order:", error);
+                    }
+                }
+            }
 
-            // Simpan Order & Cart ke LocalStorage
-            saveOrdersToStorage();
-
-            // Hapus item dari cart
+            // Bersihkan Keranjang
             cart = cart.filter(item => !item.selected);
             saveCartToStorage();
-            
-            // Update UI
             updateCartUI();
-            renderProducts(); // Refresh tampilan produk di halaman
-            closeDetailModal();
-            toggleCart(); // Tutup sidebar cart
             
-            const sellerCount = Object.keys(itemsBySeller).length;
-            showNotification(`Berhasil! Stok telah diperbarui. Total: Rp ${formatPrice(grandTotal)}`);
+            // Refresh Tampilan
+            renderProducts();
+            closeDetailModal();
+            toggleCart();
+            
+            showNotification('Pesanan berhasil dibuat & tersimpan!');
         }
 
         function showNotification(message) {
@@ -5011,7 +4973,7 @@
                 const dobDate = new Date(dob);
                 const formattedDob = dobDate.toLocaleDateString('id-ID', { 
                     day: '2-digit', 
-                    month: 'long', 
+                    month: 'short', 
                     year: 'numeric' 
                 });
                 if(displayDobEl) displayDobEl.textContent = formattedDob;
@@ -5444,6 +5406,45 @@
             }
         }
 
+        async function fetchOrdersFromFirebase() {
+            const currentUser = localStorage.getItem('currentUser');
+            const isGuest = localStorage.getItem('isGuest') === 'true';
+
+            if (!isGuest && currentUser && window.db) {
+                try {
+                    const userData = JSON.parse(currentUser);
+                    
+                    // Ambil data dari collection 'orders' dimana userId == email user login
+                    // Dan urutkan berdasarkan waktu pembuatan (terbaru di atas)
+                    const q = window.firestoreQuery(
+                        window.firestoreCollection(window.db, "orders"),
+                        window.firestoreWhere("userId", "==", userData.email),
+                        window.firestoreOrderBy("createdAt", "desc")
+                    );
+                    
+                    const querySnapshot = await window.firestoreGetDocs(q);
+                    const firebaseOrders = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        // Masukkan data ke array, sertakan ID dokumennya
+                        firebaseOrders.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    if (firebaseOrders.length > 0) {
+                        orders = firebaseOrders; // Update variabel global orders
+                        console.log(`Berhasil memuat ${orders.length} pesanan dari Firebase`);
+                    }
+                } catch (error) {
+                    console.error("Gagal memuat pesanan:", error);
+                    // Jika error karena index belum dibuat, coba query tanpa sorting dulu
+                    if(error.message.includes("requires an index")) {
+                        console.log("Mencoba memuat tanpa sorting...");
+                        // Fallback logic could go here if needed
+                    }
+                }
+            }
+        }
+
         function editAddress(addressId) {
             showAddAddressModal(addressId);
         }
@@ -5482,6 +5483,65 @@
 
         function getDefaultAddress() {
             return addresses.find(a => a.isDefault) || addresses[0] || null;
+        }
+
+        async function markOrderAsReceived(orderId) {
+            if (!confirm("Apakah Anda yakin barang sudah diterima dan sesuai pesanan? Status akan diubah menjadi 'Selesai'.")) {
+                return;
+            }
+
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+
+            // 1. Cari Order di Array Lokal
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            if (orderIndex === -1) return;
+
+            const order = orders[orderIndex];
+
+            // 2. Update Data Tracking (Semua langkah jadi completed)
+            const updatedTracking = order.tracking.map(step => ({
+                ...step,
+                completed: true,
+                active: step.title === 'Pesanan Diterima' // Hanya langkah terakhir yg active
+            }));
+
+            // Tambahkan waktu diterima
+            updatedTracking[updatedTracking.length - 1].time = new Date().toLocaleString('id-ID');
+
+            showNotification('Mengupdate status pesanan...');
+
+            // 3. UPDATE KE FIREBASE
+            if (window.db && window.firestoreDoc && window.firestoreUpdateDoc) {
+                try {
+                    // Gunakan ID dokumen dari order (pastikan fetchOrdersFromFirebase mengisi id dengan doc.id)
+                    const orderRef = window.firestoreDoc(window.db, "orders", order.id);
+                    
+                    await window.firestoreUpdateDoc(orderRef, {
+                        status: 'delivered',
+                        tracking: updatedTracking,
+                        updatedAt: Date.now()
+                    });
+                    
+                    console.log("Status pesanan berhasil diupdate di Firebase");
+                } catch (error) {
+                    console.error("Gagal update status:", error);
+                    showNotification('Gagal update ke server, cek koneksi internet.');
+                    return; // Jangan lanjut update lokal jika server gagal (opsional)
+                }
+            }
+
+            // 4. Update Lokal & UI
+            order.status = 'delivered';
+            order.tracking = updatedTracking;
+            
+            saveOrdersToStorage();
+            
+            // Refresh halaman agar order pindah dari Tracking ke Riwayat
+            renderOrderTracking(); 
+            renderOrderHistory(); // Jika user pindah tab nanti datanya sudah siap
+            
+            showNotification('Pesanan selesai! Terima kasih telah berbelanja.');
         }
 
         function loadSellerInfoFromAddress() {
