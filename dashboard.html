@@ -2178,7 +2178,20 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            doc, 
+            deleteDoc, 
+            updateDoc, 
+            serverTimestamp, 
+            query, 
+            orderBy, 
+            where, // <--- INI WAJIB ADA
+            getDoc // <--- INI JUGA WAJIB ADA
+        } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
         import { getDatabase } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -2197,18 +2210,19 @@
         window.auth = getAuth(app);
         window.db = getFirestore(app);
         window.rtdb = getDatabase(app);
-        window.firestoreWhere = where;
         
         // Export Firestore functions to window for use in inline scripts
         window.firestoreCollection = collection;
         window.firestoreAddDoc = addDoc;
         window.firestoreGetDocs = getDocs;
         window.firestoreDoc = doc;
+        window.firestoreGetDoc = getDoc; // Export getDoc
         window.firestoreDeleteDoc = deleteDoc;
         window.firestoreUpdateDoc = updateDoc;
         window.firestoreServerTimestamp = serverTimestamp;
         window.firestoreQuery = query;
         window.firestoreOrderBy = orderBy;
+        window.firestoreWhere = where; // Export where
         
         // Set flag that Firebase is ready
         window.firebaseReady = true;
@@ -2217,7 +2231,6 @@
         // Check authentication
         onAuthStateChanged(window.auth, (user) => {
             if (!user && !localStorage.getItem('isGuest')) {
-                // Redirect to login if not authenticated and not guest
                 window.location.href = 'index.html';
             }
         });
@@ -3730,6 +3743,7 @@
             try {
                 await initDB();
                 setupGuestMode(); // Setup guest mode if applicable
+                await fetchProductsFromFirebase();
                 await fetchAddressesFromFirebase();
                 await fetchOrdersFromFirebase();
 
@@ -3774,8 +3788,9 @@
                 }
                 
                 currentProducts = [...products];
-                renderAddresses(); // Pastikan di-render ulang setelah fetch
                 renderProducts();
+                renderMyProducts();
+                renderAddresses(); // Pastikan di-render ulang setelah fetch
                 loadCartFromStorage();
                 loadWishlistFromStorage();
                 updateCartUI();
@@ -3799,8 +3814,8 @@
                     }
                 });
             } catch (error) {
-                console.error('Failed to initialize app:', error);
-                showNotification('Gagal memuat aplikasi. Refresh halaman.');
+                console.error("Error init:", error);
+                // Jangan tampilkan alert error jika hanya masalah sepele
             }
         }
 
@@ -4725,18 +4740,33 @@
         async function submitNewProduct(event) {
             event.preventDefault();
 
+            // Cek Upload Foto
             if (uploadedImages.length === 0) {
                 showNotification('Minimal upload 1 foto produk!');
                 return;
             }
 
+            // Validasi Harga
+            const price = parseInt(document.getElementById('productPrice').value);
+            const originalPrice = parseInt(document.getElementById('productOriginalPrice').value);
+            if (price >= originalPrice) {
+                showNotification('Harga jual harus lebih rendah dari harga asli!');
+                return;
+            }
+
+            showNotification('Sedang mengupload produk...');
+
+            const currentUserStr = localStorage.getItem('currentUser');
+            const isGuest = localStorage.getItem('isGuest') === 'true';
+            
+            // Siapkan Object Data Produk
             const newProduct = {
                 name: document.getElementById('productName').value.trim(),
-                price: parseInt(document.getElementById('productPrice').value),
-                originalPrice: parseInt(document.getElementById('productOriginalPrice').value),
+                price: price,
+                originalPrice: originalPrice,
                 category: document.getElementById('productCategory').value,
                 images: [...uploadedImages],
-                image: uploadedImages[0],
+                image: uploadedImages[0], // Foto utama
                 seller: document.getElementById('productSeller').value.trim() || 'Anonymous',
                 location: document.getElementById('productLocation').value.trim() || 'Unknown',
                 stock: parseInt(document.getElementById('productStock').value),
@@ -4746,95 +4776,67 @@
                     kondisi: document.getElementById('productCondition').value,
                     berat: document.getElementById('productWeight').value.trim() || 'Tidak disebutkan'    
                 },
+                createdAt: Date.now(), // Untuk sorting lokal sementara
                 isMine: true
             };
 
-            if (newProduct.price >= newProduct.originalPrice) {
-                showNotification('Harga jual harus lebih rendah dari harga asli!');
-                return;
+            // --- SIMPAN KE FIREBASE (INTI PERBAIKAN) ---
+            if (!isGuest && currentUserStr && window.db) {
+                try {
+                    const userData = JSON.parse(currentUserStr);
+                    
+                    // Tambahkan identitas penjual
+                    newProduct.userId = userData.email; 
+                    newProduct.userName = userData.name || 'User';
+
+                    // Siapkan data untuk Firestore (gunakan serverTimestamp)
+                    const productToSave = {
+                        ...newProduct,
+                        createdAt: window.firestoreServerTimestamp(),
+                        updatedAt: window.firestoreServerTimestamp()
+                    };
+                    
+                    // Simpan ke collection 'products'
+                    const docRef = await window.firestoreAddDoc(
+                        window.firestoreCollection(window.db, 'products'),
+                        productToSave
+                    );
+                    
+                    // Update ID produk lokal dengan ID dari Database
+                    newProduct.id = docRef.id;
+                    newProduct.firestoreId = docRef.id;
+                    
+                    console.log('Produk berhasil disimpan ke Firebase:', docRef.id);
+                } catch (error) {
+                    console.error('Gagal upload:', error);
+                    showNotification('Gagal upload ke server. Cek koneksi internet.');
+                    return; 
+                }
+            } else if (isGuest) {
+                showNotification('Mode Tamu: Produk tidak tersimpan permanen.');
+                // Generate ID dummy untuk tamu
+                newProduct.id = Date.now();
             }
 
-            // Check if user is logged in (not guest)
-            const currentUser = localStorage.getItem('currentUser');
-            const isGuest = localStorage.getItem('isGuest') === 'true';
-
-            // Always add to local array first (for immediate display)
-            newProduct.id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+            // Update Tampilan Lokal (Agar langsung muncul tanpa refresh)
             products.unshift(newProduct);
             currentProducts = [...products];
-            renderProducts();
-
-            if (isGuest || !currentUser) {
-                // Guest mode - only local storage
-                showNotification('⚠️ Mode Guest: Produk hanya tersimpan sementara. Login untuk menyimpan permanen!');
-            } else {
-                // Logged in - wait for Firebase then save
-                showNotification('✅ Produk berhasil ditambahkan!');
-                
-                // Wait for Firebase SDK to be ready, then save
-                const waitForFirebase = setInterval(async () => {
-                    if (window.firebaseReady && window.db && window.firestoreAddDoc && window.firestoreCollection) {
-                        clearInterval(waitForFirebase);
-                        
-                        try {
-                            const userData = JSON.parse(currentUser);
-                            newProduct.userId = userData.email || 'unknown';
-                            newProduct.userName = userData.name || 'Unknown';
-                            
-                            console.log('💾 Saving to Firestore...');
-                            const docRef = await window.firestoreAddDoc(
-                                window.firestoreCollection(window.db, 'products'),
-                                {
-                                    ...newProduct,
-                                    createdAt: window.firestoreServerTimestamp(),
-                                    updatedAt: window.firestoreServerTimestamp()
-                                }
-                            );
-                            
-                            // Update product with Firestore ID
-                            const productIndex = products.findIndex(p => p.id === newProduct.id);
-                            if (productIndex !== -1) {
-                                products[productIndex].firestoreId = docRef.id;
-                                products[productIndex].id = docRef.id; // Use Firestore ID as main ID
-                            }
-                            
-                            console.log('✅ Product saved to Firestore:', docRef.id);
-                        } catch (error) {
-                            console.error('❌ Error saving to Firestore:', error);
-                            console.error('Error details:', error.message);
-                        }
-                    }
-                }, 100); // Check every 100ms
-                
-                // Timeout after 10 seconds
-                setTimeout(() => {
-                    clearInterval(waitForFirebase);
-                    if (!window.firebaseReady) {
-                        console.error('❌ Firebase SDK timeout - not ready after 10s');
-                    }
-                }, 10000);
-            }
-
-            activeCategory = 'all';
-            searchInput.value = '';
-
-            categoryFilters.forEach(filter => {
-                if (filter.getAttribute('data-category') === 'all') {
-                    filter.classList.add('active');
-                } else {
-                    filter.classList.remove('active');
-                }
-            });
-
-            // Reset form
+            
+            // Reset Form & UI
             document.getElementById('addProductForm').reset();
             uploadedImages = [];
             document.getElementById('imagesPreviewContainer').classList.remove('active');
             document.getElementById('imagesPreviewGrid').innerHTML = '';
             document.getElementById('imageCount').textContent = '0';
 
-            // Kembali ke home page
+            // Kembali ke Home
+            activeCategory = 'all';
+            document.querySelectorAll('.category-filter').forEach(el => el.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
+            
             showPage('home');
+            renderProducts();
+            showNotification('Produk berhasil diterbitkan!');
         }
 
         // ========== PROFILE FUNCTIONS ==========
@@ -5414,33 +5416,29 @@
                 try {
                     const userData = JSON.parse(currentUser);
                     
-                    // Ambil data dari collection 'orders' dimana userId == email user login
-                    // Dan urutkan berdasarkan waktu pembuatan (terbaru di atas)
+                    // PERBAIKAN: Hapus 'orderBy' dari sini untuk menghindari error Index
                     const q = window.firestoreQuery(
                         window.firestoreCollection(window.db, "orders"),
-                        window.firestoreWhere("userId", "==", userData.email),
-                        window.firestoreOrderBy("createdAt", "desc")
+                        window.firestoreWhere("userId", "==", userData.email)
                     );
                     
                     const querySnapshot = await window.firestoreGetDocs(q);
                     const firebaseOrders = [];
                     
                     querySnapshot.forEach((doc) => {
-                        // Masukkan data ke array, sertakan ID dokumennya
                         firebaseOrders.push({ id: doc.id, ...doc.data() });
                     });
 
+                    // PERBAIKAN: Urutkan manual di sini (Client-side sorting)
+                    // Dari yang terbaru (waktu besar) ke terlama (waktu kecil)
+                    firebaseOrders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
                     if (firebaseOrders.length > 0) {
-                        orders = firebaseOrders; // Update variabel global orders
-                        console.log(`Berhasil memuat ${orders.length} pesanan dari Firebase`);
+                        orders = firebaseOrders;
+                        console.log(`Berhasil memuat ${orders.length} pesanan.`);
                     }
                 } catch (error) {
                     console.error("Gagal memuat pesanan:", error);
-                    // Jika error karena index belum dibuat, coba query tanpa sorting dulu
-                    if(error.message.includes("requires an index")) {
-                        console.log("Mencoba memuat tanpa sorting...");
-                        // Fallback logic could go here if needed
-                    }
                 }
             }
         }
@@ -5483,6 +5481,54 @@
 
         function getDefaultAddress() {
             return addresses.find(a => a.isDefault) || addresses[0] || null;
+        }
+
+        async function fetchProductsFromFirebase() {
+            if (window.db && window.firestoreCollection && window.firestoreGetDocs) {
+                try {
+                    console.log("Mengambil produk dari server...");
+                    
+                    // PERBAIKAN: Hanya ambil data, jangan urutkan di server
+                    const q = window.firestoreQuery(
+                        window.firestoreCollection(window.db, 'products')
+                    );
+                    
+                    const querySnapshot = await window.firestoreGetDocs(q);
+                    const firestoreProducts = [];
+                    
+                    const currentUser = localStorage.getItem('currentUser');
+                    const userEmail = currentUser ? JSON.parse(currentUser).email : null;
+
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        firestoreProducts.push({
+                            id: doc.id, 
+                            firestoreId: doc.id,
+                            ...data,
+                            isMine: userEmail && data.userId === userEmail 
+                        });
+                    });
+
+                    // PERBAIKAN: Urutkan manual di JavaScript
+                    firestoreProducts.sort((a, b) => {
+                        // Gunakan Date.now() jika timestamp firebase belum terconvert
+                        const timeA = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : (a.createdAt || 0);
+                        const timeB = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : (b.createdAt || 0);
+                        return timeB - timeA;
+                    });
+
+                    // Gabungkan dengan produk statis (ID 1-8)
+                    // Hapus duplikat jika ada
+                    const staticProducts = products.filter(p => !p.firestoreId && typeof p.id === 'number');
+                    
+                    if (firestoreProducts.length > 0) {
+                        products = [...firestoreProducts, ...staticProducts];
+                        console.log(`Berhasil memuat ${firestoreProducts.length} produk.`);
+                    }
+                } catch (error) {
+                    console.error("Gagal memuat produk:", error);
+                }
+            }
         }
 
         async function markOrderAsReceived(orderId) {
