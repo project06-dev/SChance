@@ -2177,7 +2177,8 @@
                 <!-- Firebase SDK - TAMBAHKAN SEBELUM </head> -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+        window.firebaseSignOut = signOut; // Expose fungsi ke window global
         import { 
             getFirestore, 
             collection, 
@@ -2230,8 +2231,9 @@
         
         // Check authentication
         onAuthStateChanged(window.auth, (user) => {
-            if (!user && !localStorage.getItem('isGuest')) {
-                window.location.href = 'index.html';
+            const isGuest = localStorage.getItem('isGuest') === 'true';
+            if (!user && !isGuest) {
+            window.location.href = 'index.html';
             }
         });
     </script>
@@ -5512,15 +5514,30 @@ document.addEventListener('DOMContentLoaded', () => {
             closeDetailModal();
         }
 
-        function logout() {
-            if (confirm('Apakah Anda yakin ingin keluar?')) {
-                // Hapus currentUser dari localStorage
-                localStorage.removeItem('currentUser');
-                
-                // Redirect ke halaman login
-                window.location.href = 'index.html';
+        async function logout() {
+    if (confirm('Apakah Anda yakin ingin keluar?')) {
+        try {
+            // 1. Hapus data sesi lokal
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isGuest');
+            
+            // 2. Logout dari Firebase (Wajib pakai await agar tuntas dulu)
+            // Pastikan window.auth dan window.firebaseSignOut sudah didefinisikan di <head>
+            if (window.auth && window.firebaseSignOut) {
+                await window.firebaseSignOut(window.auth);
             }
+            
+            // 3. Redirect ke halaman login (Gunakan path relatif)
+            // 'replace' lebih baik daripada 'href' agar user tidak bisa tekan tombol Back
+            window.location.replace('index.html'); 
+            
+        } catch (error) {
+            console.error("Gagal logout:", error);
+            // Tetap paksa pindah halaman meski error firebase
+            window.location.replace('index.html');
         }
+    }
+}
 
         // ========== ADDRESS MANAGEMENT FUNCTIONS ==========
 
