@@ -2239,40 +2239,62 @@
 <body>
     <!-- Header Section -->
     <header>
-        <div class="container">
-            <div class="header-top">
-                <div class="logo">
-        <img src="https://i.imgur.com/Mfk3suT.png" alt="Second Chance Logo" class="logo-img">
-    </div>
+    <div class="container">
+        <div class="header-top">
+            <div class="logo">
+                <img src="https://i.imgur.com/Mfk3suT.png" alt="Second Chance Logo" class="logo-img">
+            </div>
+            
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 0 15px;">
+                <div style="width: 100%; max-width: 600px; display: flex; gap: 10px; align-items: center;">
                 
-                <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Cari produk, kategori, atau merek...">
-                    <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
-                </div>
-                
-                <div class="user-actions">
-                    <a onclick="toggleCart()">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-count">0</span>
-                    </a>
+                    <div class="search-bar" style="margin: 0; flex-grow: 1; width: auto;">
+                        <input type="text" id="searchInput" placeholder="Cari produk...">
+                        <button onclick="applySearchAndFilter()"><i class="fas fa-search"></i></button>
+                    </div>
+
+                    <button onclick="openFilterModal()" class="btn-primary" style="
+                        width: 45px; 
+                        height: 45px; 
+                        border-radius: 50%; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        flex-shrink: 0; 
+                        padding: 0;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <i class="fas fa-sliders-h"></i>
+                    </button>
                 </div>
             </div>
+            
+            <div class="user-actions" style="display: flex; align-items: center;">
+    <a id="guestLoginBtn" onclick="guestToLogin()" style="display: none; margin-right: 20px; cursor: pointer; color: var(--pink-dark);" title="Login ke Akun">
+        <i class="fas fa-sign-in-alt" style="font-size: 22px;"></i>
+    </a>
+
+    <a onclick="toggleCart()" style="cursor: pointer; position: relative;">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-count">0</span>
+    </a>
+</div>
         </div>
-        
-        <nav id="categoryNav">
-            <div class="container">
-                <ul class="categories">
-                    <li><a class="category-filter active" data-category="all">Semua</a></li>
-                    <li><a class="category-filter" data-category="kosmetik">Kosmetik</a></li>
-                    <li><a class="category-filter" data-category="pakaian">Pakaian</a></li>
-                    <li><a class="category-filter" data-category="skincare">Skincare</a></li>
-                    <li><a class="category-filter" data-category="aksesoris">Aksesoris</a></li>
-                    <li><a class="category-filter" data-category="sepatu">Sepatu</a></li>
-                    <li><a class="category-filter" data-category="tas">Tas</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    </div>
+    
+    <nav id="categoryNav" style="width: 100%; background-color: var(--pink-light);">
+        <div class="container">
+            <ul class="categories">
+                <li><a class="category-filter active" data-category="all">Semua</a></li>
+                <li><a class="category-filter" data-category="kosmetik">Kosmetik</a></li>
+                <li><a class="category-filter" data-category="pakaian">Pakaian</a></li>
+                <li><a class="category-filter" data-category="skincare">Skincare</a></li>
+                <li><a class="category-filter" data-category="aksesoris">Aksesoris</a></li>
+                <li><a class="category-filter" data-category="sepatu">Sepatu</a></li>
+                <li><a class="category-filter" data-category="tas">Tas</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
 
     <!-- HOME PAGE -->
     <div id="homePage" class="page-section active">
@@ -2313,6 +2335,29 @@
                     </div>
                     
                     <div class="form-row">
+    <div class="form-group">
+    <label for="productSeller">Nama Penjual *</label>
+    <input type="text" id="productSeller" placeholder="Nama Anda">
+    <small style="color: var(--gray); font-size: 12px; margin-top: 5px; display: block;">
+        <i class="fas fa-info-circle"></i> Diisi sesuai nama profil
+    </small>
+</div>
+
+<div class="form-group">
+    <label>Lokasi (Area Semarang) *</label>
+    <div class="form-row">
+        <div class="form-group" style="margin-bottom: 0;">
+            <select id="kecamatanSelect" onchange="updateKelurahan()" required>
+                <option value="">Pilih Kecamatan</option>
+                </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <select id="kelurahanSelect" required disabled>
+                <option value="">Pilih Kelurahan</option>
+                </select>
+        </div>
+    </div>
+</div>
                         <div class="form-group">
                             <label for="productPrice">Harga Jual (Rp) *</label>
                             <input type="number" id="productPrice" required placeholder="85000" min="0">
@@ -2341,24 +2386,6 @@
                         <div class="form-group">
                             <label for="productStock">Stok *</label>
                             <input type="number" id="productStock" required value="1" min="1">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productSeller">Nama Penjual *</label>
-                            <input type="text" id="productSeller" placeholder="Nama Anda">
-                            <small style="color: var(--gray); font-size: 12px; margin-top: 5px; display: block;">
-                                <i class="fas fa-info-circle"></i> Diambil dari alamat utama (opsional)
-                            </small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productLocation">Lokasi *</label>
-                            <input type="text" id="productLocation" placeholder="Jakarta Selatan">
-                            <small style="color: var(--gray); font-size: 12px; margin-top: 5px; display: block;">
-                                <i class="fas fa-info-circle"></i> Diambil dari alamat utama (opsional)
-                            </small>
                         </div>
                     </div>
                     
@@ -2769,170 +2796,211 @@
         <span id="notificationText">Produk telah ditambahkan ke keranjang</span>
     </div>
 
+    <div class="modal" id="filterModal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-sliders-h"></i> Filter Pencarian</h3>
+            <span class="close-modal" onclick="closeFilterModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Rentang Harga (Rp)</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="filterMinPrice" placeholder="Min" style="margin: 0;">
+                    <span>-</span>
+                    <input type="number" id="filterMaxPrice" placeholder="Max" style="margin: 0;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Lokasi (Kecamatan)</label>
+                <select id="filterLocation">
+                    <option value="">Semua Lokasi</option>
+                    </select>
+            </div>
+
+            <div class="form-group">
+                <label>Urutkan Berdasarkan</label>
+                <select id="filterSort">
+                    <option value="newest">Terbaru</option>
+                    <option value="price_asc">Harga Terendah</option>
+                    <option value="price_desc">Harga Tertinggi</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-cancel" onclick="resetFilters()">Reset</button>
+                <button class="btn-submit" onclick="applySearchAndFilter()">Terapkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <script>
         // Data produk
-        let products = [
-            {
-                id: 1,
-                name: "Lipstick Merah Muda - Hampir Baru",
-                price: 85000,
-                originalPrice: 150000,
-                category: "kosmetik",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b256ffd9-7531-4516-b8b3-36e77a4e8034.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b256ffd9-7531-4516-b8b3-36e77a4e8034.png",
-                seller: "Sarah Wijaya",
-                location: "Jakarta Selatan",
-                stock: 1,
-                description: "Lipstick merek terkenal dengan warna merah muda yang cocok untuk kulit Indonesia. Hampir tidak pernah dipakai, hanya dicoba 2 kali.",
-                details: {
-                    merek: "Maybelline",
-                    kondisi: "Seperti Baru",
-                    berat: "50g",
-                    bahan: "Wax, Minyak, Pigmen"
-                },
-                isMine: false
-            },
-            {
-                id: 2,
-                name: "Dress Floral - Kondisi Sangat Baik",
-                price: 120000,
-                originalPrice: 250000,
-                category: "pakaian",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/3b0de758-09ab-47af-af1b-57e4c65087c3.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/3b0de758-09ab-47af-af1b-57e4c65087c3.png",
-                seller: "Rani Putri",
-                location: "Bandung",
-                stock: 1,
-                description: "Dress floral dengan bahan katun yang nyaman dipakai. Cocok untuk acara santai maupun formal. Hanya dipakai 3 kali.",
-                details: {
-                    merek: "H&M",
-                    kondisi: "Sangat Baik",
-                    ukuran: "M",
-                    bahan: "Katun"
-                },
-                isMine: false
-            },
-            {
-                id: 3,
-                name: "Serum Vitamin C - 80% Terisi",
-                price: 95000,
-                originalPrice: 180000,
-                category: "skincare",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/6e1e2abd-7b6f-41e3-abdf-9ebebcea5e9c.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/6e1e2abd-7b6f-41e3-abdf-9ebebcea5e9c.png",
-                seller: "Dina Kartika",
-                location: "Surabaya",
-                stock: 1,
-                description: "Serum Vitamin C untuk mencerahkan kulit dan mengurangi noda hitam. Masih tersisa 80% dari kemasan awal.",
-                details: {
-                    merek: "The Ordinary",
-                    kondisi: "80% Terisi",
-                    berat: "30ml",
-                    jenis: "Serum"
-                },
-                isMine: false
-            },
-            {
-                id: 4,
-                name: "Tas Tangan Kulit - Like New",
-                price: 250000,
-                originalPrice: 450000,
-                category: "tas",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/83782aef-2931-4a53-b677-3362c404e392.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/83782aef-2931-4a53-b677-3362c404e392.png",
-                seller: "Maya Sari",
-                location: "Jakarta Pusat",
-                stock: 1,
-                description: "Tas tangan kulit asli dengan kualitas premium. Hanya digunakan beberapa kali, masih seperti baru.",
-                details: {
-                    merek: "Local Brand",
-                    kondisi: "Like New",
-                    bahan: "Kulit Sintetis",
-                    dimensi: "20x15x10 cm"
-                },
-                isMine: false
-            },
-            {
-                id: 5,
-                name: "Eyeshadow Palette - Hampir Penuh",
-                price: 150000,
-                originalPrice: 280000,
-                category: "kosmetik",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/14a5a12d-42d0-44a3-9c2a-2e0cab3822b7.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/14a5a12d-42d0-44a3-9c2a-2e0cab3822b7.png",
-                seller: "Lina Agustina",
-                location: "Yogyakarta",
-                stock: 1,
-                description: "Palette eyeshadow dengan 12 warna matte dan shimmer. Hanya beberapa warna yang pernah dipakai.",
-                details: {
-                    merek: "Revlon",
-                    kondisi: "Hampir Penuh",
-                    berat: "200g",
-                    shades: "12 Warna"
-                },
-                isMine: false
-            },
-            {
-                id: 6,
-                name: "Blush On Cream - Baru Dipakai 2x",
-                price: 75000,
-                originalPrice: 140000,
-                category: "kosmetik",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b30712c3-e83c-40dd-b402-80011632e929.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b30712c3-e83c-40dd-b402-80011632e929.png",
-                seller: "Fitri Handayani",
-                location: "Semarang",
-                stock: 1,
-                description: "Blush on cream dengan finish natural. Mudah blend dan tahan lama. Hanya dicoba 2 kali.",
-                details: {
-                    merek: "Focallure",
-                    kondisi: "Seperti Baru",
-                    berat: "15g",
-                    finish: "Natural"
-                },
-                isMine: false
-            },
-            {
-                id: 7,
-                name: "Sepatu Wanita Kulit - Size 38",
-                price: 180000,
-                originalPrice: 350000,
-                category: "sepatu",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1ec3c438-627a-457d-849e-a3bb39da94b9.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1ec3c438-627a-457d-849e-a3bb39da94b9.png",
-                seller: "Putri Amelia",
-                location: "Bali",
-                stock: 1,
-                description: "Sepatu wanita kulit dengan desain elegan. Nyaman untuk dipakai sehari-hari. Kondisi masih sangat baik.",
-                details: {
-                    merek: "Charles & Keith",
-                    kondisi: "Baik",
-                    ukuran: "38",
-                    bahan: "Kulit Sintetis"
-                },
-                isMine: false
-            },
-            {
-                id: 8,
-                name: "Kalung Silver 925 - Antik",
-                price: 95000,
-                originalPrice: 180000,
-                category: "aksesoris",
-                images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4309e7e9-a12c-4f49-b574-4f89c1be45d7.png"],
-                image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4309e7e9-a12c-4f49-b574-4f89c1be45d7.png",
-                seller: "Dewi Safitri",
-                location: "Medan",
-                stock: 1,
-                description: "Kalung silver 925 dengan liontin mutiara. Desain elegan dan timeless. Dijamin keasliannya.",
-                details: {
-                    merek: "Swarovski",
-                    kondisi: "Sangat Baik",
-                    bahan: "Silver 925",
-                    panjang: "45 cm"
-                },
-                isMine: false
-            }
-        ];
+        // Data produk (Updated: Lokasi Semarang)
+let products = [
+    {
+        id: 1,
+        name: "Lipstick Merah Muda - Hampir Baru",
+        price: 85000,
+        originalPrice: 150000,
+        category: "kosmetik",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b256ffd9-7531-4516-b8b3-36e77a4e8034.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b256ffd9-7531-4516-b8b3-36e77a4e8034.png",
+        seller: "Sarah Wijaya",
+        location: "Banyumanik", // <--- Ganti Jakarta Selatan jadi Banyumanik
+        stock: 1,
+        description: "Lipstick merek terkenal dengan warna merah muda yang cocok untuk kulit Indonesia. Hampir tidak pernah dipakai, hanya dicoba 2 kali.",
+        details: {
+            merek: "Maybelline",
+            kondisi: "Seperti Baru",
+            berat: "50g",
+            bahan: "Wax, Minyak, Pigmen"
+        },
+        isMine: false
+    },
+    {
+        id: 2,
+        name: "Dress Floral - Kondisi Sangat Baik",
+        price: 120000,
+        originalPrice: 250000,
+        category: "pakaian",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/3b0de758-09ab-47af-af1b-57e4c65087c3.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/3b0de758-09ab-47af-af1b-57e4c65087c3.png",
+        seller: "Rani Putri",
+        location: "Tembalang", // <--- Lokasi mahasiswa Undip
+        stock: 1,
+        description: "Dress floral dengan bahan katun yang nyaman dipakai. Cocok untuk acara santai maupun formal. Hanya dipakai 3 kali.",
+        details: {
+            merek: "H&M",
+            kondisi: "Sangat Baik",
+            ukuran: "M",
+            bahan: "Katun"
+        },
+        isMine: false
+    },
+    {
+        id: 3,
+        name: "Serum Vitamin C - 80% Terisi",
+        price: 95000,
+        originalPrice: 180000,
+        category: "skincare",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/6e1e2abd-7b6f-41e3-abdf-9ebebcea5e9c.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/6e1e2abd-7b6f-41e3-abdf-9ebebcea5e9c.png",
+        seller: "Dina Kartika",
+        location: "Pedurungan", // <--- Area timur Semarang
+        stock: 1,
+        description: "Serum Vitamin C untuk mencerahkan kulit dan mengurangi noda hitam. Masih tersisa 80% dari kemasan awal.",
+        details: {
+            merek: "The Ordinary",
+            kondisi: "80% Terisi",
+            berat: "30ml",
+            jenis: "Serum"
+        },
+        isMine: false
+    },
+    {
+        id: 4,
+        name: "Tas Tangan Kulit - Like New",
+        price: 250000,
+        originalPrice: 450000,
+        category: "tas",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/83782aef-2931-4a53-b677-3362c404e392.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/83782aef-2931-4a53-b677-3362c404e392.png",
+        seller: "Maya Sari",
+        location: "Semarang Selatan", // <--- Area tengah kota
+        stock: 1,
+        description: "Tas tangan kulit asli dengan kualitas premium. Hanya digunakan beberapa kali, masih seperti baru.",
+        details: {
+            merek: "Local Brand",
+            kondisi: "Like New",
+            bahan: "Kulit Sintetis",
+            dimensi: "20x15x10 cm"
+        },
+        isMine: false
+    },
+    {
+        id: 5,
+        name: "Eyeshadow Palette - Hampir Penuh",
+        price: 150000,
+        originalPrice: 280000,
+        category: "kosmetik",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/14a5a12d-42d0-44a3-9c2a-2e0cab3822b7.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/14a5a12d-42d0-44a3-9c2a-2e0cab3822b7.png",
+        seller: "Lina Agustina",
+        location: "Ngaliyan", // <--- Area barat Semarang
+        stock: 1,
+        description: "Palette eyeshadow dengan 12 warna matte dan shimmer. Hanya beberapa warna yang pernah dipakai.",
+        details: {
+            merek: "Revlon",
+            kondisi: "Hampir Penuh",
+            berat: "200g",
+            shades: "12 Warna"
+        },
+        isMine: false
+    },
+    {
+        id: 6,
+        name: "Blush On Cream - Baru Dipakai 2x",
+        price: 75000,
+        originalPrice: 140000,
+        category: "kosmetik",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b30712c3-e83c-40dd-b402-80011632e929.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b30712c3-e83c-40dd-b402-80011632e929.png",
+        seller: "Fitri Handayani",
+        location: "Semarang Tengah", // <--- Pusat kota
+        stock: 1,
+        description: "Blush on cream dengan finish natural. Mudah blend dan tahan lama. Hanya dicoba 2 kali.",
+        details: {
+            merek: "Focallure",
+            kondisi: "Seperti Baru",
+            berat: "15g",
+            finish: "Natural"
+        },
+        isMine: false
+    },
+    {
+        id: 7,
+        name: "Sepatu Wanita Kulit - Size 38",
+        price: 180000,
+        originalPrice: 350000,
+        category: "sepatu",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1ec3c438-627a-457d-849e-a3bb39da94b9.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1ec3c438-627a-457d-849e-a3bb39da94b9.png",
+        seller: "Putri Amelia",
+        location: "Gajahmungkur", // <--- Area atas/Candi
+        stock: 1,
+        description: "Sepatu wanita kulit dengan desain elegan. Nyaman untuk dipakai sehari-hari. Kondisi masih sangat baik.",
+        details: {
+            merek: "Charles & Keith",
+            kondisi: "Baik",
+            ukuran: "38",
+            bahan: "Kulit Sintetis"
+        },
+        isMine: false
+    },
+    {
+        id: 8,
+        name: "Kalung Silver 925 - Antik",
+        price: 95000,
+        originalPrice: 180000,
+        category: "aksesoris",
+        images: ["https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4309e7e9-a12c-4f49-b574-4f89c1be45d7.png"],
+        image: "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4309e7e9-a12c-4f49-b574-4f89c1be45d7.png",
+        seller: "Dewi Safitri",
+        location: "Candisari", // <--- Area perbukitan
+        stock: 1,
+        description: "Kalung silver 925 dengan liontin mutiara. Desain elegan dan timeless. Dijamin keasliannya.",
+        details: {
+            merek: "Swarovski",
+            kondisi: "Sangat Baik",
+            bahan: "Silver 925",
+            panjang: "45 cm"
+        },
+        isMine: false
+    }
+];
 
         // State aplikasi
         let cart = [];
@@ -2969,101 +3037,97 @@
         const categoryFilters = document.querySelectorAll('.category-filter');
 
         // Page Navigation Functions
-        async function showPage(pageName) {
-            // --- 1. LOGIKA BARU: TUTUP KERANJANG & MODAL OTOMATIS ---
-            // Setiap kali pindah tab, kita pastikan keranjang tertutup
-            const cartSidebar = document.getElementById('cartSidebar');
-            const overlay = document.getElementById('overlay');
-            const productModal = document.getElementById('productModal');
-            
-            if (cartSidebar) cartSidebar.classList.remove('active');
-            if (productModal) productModal.classList.remove('active');
-            if (overlay) overlay.classList.remove('active');
-            document.body.style.overflow = ''; // Kembalikan scroll agar bisa digerakkan
-            // --------------------------------------------------------
+        // GANTI function showPage(pageName) dengan yang ini:
 
-            // 2. Sembunyikan semua halaman
-            document.querySelectorAll('.page-section').forEach(page => {
-                page.classList.remove('active');
-            });
+async function showPage(pageName) {
+    // 1. TUTUP INTERFACE LAIN
+    const cartSidebar = document.getElementById('cartSidebar');
+    const overlay = document.getElementById('overlay');
+    const productModal = document.getElementById('productModal');
+    
+    if (cartSidebar) cartSidebar.classList.remove('active');
+    if (productModal) productModal.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
 
-            // 3. Reset status aktif di navigasi bawah
-            document.querySelectorAll('.bottom-nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
+    // 2. SEMBUNYIKAN SEMUA HALAMAN
+    document.querySelectorAll('.page-section').forEach(page => {
+        page.classList.remove('active');
+    });
 
-            // 4. Atur tampilan Header (Search bar, kategori)
-            const categoryNav = document.getElementById('categoryNav');
-            const searchBar = document.querySelector('.search-bar');
-            const userActions = document.querySelector('.user-actions');
+    // 3. RESET NAVIGASI BAWAH
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
 
-            if (pageName === 'home') {
-                if(categoryNav) categoryNav.style.display = 'block';
-                if(searchBar) searchBar.style.display = 'flex';
-                if(userActions) userActions.style.display = 'flex';
-            } else {
-                if(categoryNav) categoryNav.style.display = 'none';
-                if(searchBar) searchBar.style.display = 'none';
-                if(userActions) userActions.style.display = 'none';
-            }
+    // --- PERBAIKAN UTAMA DI SINI ---
+    // 4. ATUR TAMPILAN HEADER (Logo & Search)
+    const mainHeader = document.querySelector('header'); // Ambil elemen Header utama
+    const categoryNav = document.getElementById('categoryNav');
 
-            // 5. Tampilkan Halaman yang Dipilih
-            currentPage = pageName;
-            
-            switch(pageName) {
-                case 'home':
-                    document.getElementById('homePage').classList.add('active');
-                    // Cari tombol navigasi yang punya onclick='showPage("home")'
-                    const homeBtn = document.querySelector('.bottom-nav-item[onclick*="home"]');
-                    if(homeBtn) homeBtn.classList.add('active');
-                    break;
-                case 'jual':
-                    document.getElementById('jualPage').classList.add('active');
-                    const jualBtn = document.querySelector('.bottom-nav-item[onclick*="jual"]');
-                    if(jualBtn) jualBtn.classList.add('active');
-                    loadSellerInfoFromAddress();
-                    break;
-                case 'profile':
-                    document.getElementById('profilePage').classList.add('active');
-                    const profileBtn = document.querySelector('.bottom-nav-item[onclick*="profile"]');
-                    if(profileBtn) profileBtn.classList.add('active');
-                    loadUserProfile();
-                    break;
-                case 'myProducts':
-                    document.getElementById('myProductsPage').classList.add('active');
-                    renderMyProducts();
-                    break;
-                case 'incomingOrders': // Case baru
-                    document.getElementById('incomingOrdersPage').classList.add('active');
-                    // Load data fresh saat halaman dibuka
-                    await fetchIncomingOrders();
-                    renderIncomingOrders();
-                    break;
-                case 'wishlist':
-                    document.getElementById('wishlistPage').classList.add('active');
-                    renderWishlist();
-                    break;
-                case 'orderTracking':
-                    document.getElementById('orderTrackingPage').classList.add('active');
-                    renderOrderTracking();
-                    break;
-                case 'orderHistory':
-                    document.getElementById('orderHistoryPage').classList.add('active');
-                    renderOrderHistory();
-                    break;
-                case 'editProfile':
-                    document.getElementById('editProfilePage').classList.add('active');
-                    loadEditProfileForm();
-                    break;
-                case 'myAddresses':
-                    document.getElementById('myAddressesPage').classList.add('active');
-                    renderAddresses();
-                    break;
-            }
+    if (pageName === 'home') {
+        // Jika di HOME: Tampilkan Header & Navigasi Kategori
+        if(mainHeader) mainHeader.style.display = 'block';
+        if(categoryNav) categoryNav.style.display = 'block';
+        
+        // Aktifkan tombol navigasi bawah 'Home'
+        const homeBtn = document.querySelector('.bottom-nav-item[onclick*="home"]');
+        if(homeBtn) homeBtn.classList.add('active');
+        
+        document.getElementById('homePage').classList.add('active');
+    } 
+    else {
+        // Jika BUKAN di Home (Jual, Profile, dll): SEMBUNYIKAN Header & Kategori
+        if(mainHeader) mainHeader.style.display = 'none';  // <--- INI KUNCINYA
+        if(categoryNav) categoryNav.style.display = 'none';
 
-            // Scroll ke paling atas saat pindah halaman
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Logika Halaman Lain
+        if (pageName === 'jual') {
+            document.getElementById('jualPage').classList.add('active');
+            const jualBtn = document.querySelector('.bottom-nav-item[onclick*="jual"]');
+            if(jualBtn) jualBtn.classList.add('active');
+            loadSellerInfoFromAddress();
         }
+        else if (pageName === 'profile') {
+            document.getElementById('profilePage').classList.add('active');
+            const profileBtn = document.querySelector('.bottom-nav-item[onclick*="profile"]');
+            if(profileBtn) profileBtn.classList.add('active');
+            loadUserProfile();
+        }
+        else if (pageName === 'myProducts') {
+            document.getElementById('myProductsPage').classList.add('active');
+            renderMyProducts();
+        }
+        else if (pageName === 'incomingOrders') {
+            document.getElementById('incomingOrdersPage').classList.add('active');
+            await fetchIncomingOrders();
+            renderIncomingOrders();
+        }
+        else if (pageName === 'wishlist') {
+            document.getElementById('wishlistPage').classList.add('active');
+            renderWishlist();
+        }
+        else if (pageName === 'orderTracking') {
+            document.getElementById('orderTrackingPage').classList.add('active');
+            renderOrderTracking();
+        }
+        else if (pageName === 'orderHistory') {
+            document.getElementById('orderHistoryPage').classList.add('active');
+            renderOrderHistory();
+        }
+        else if (pageName === 'editProfile') {
+            document.getElementById('editProfilePage').classList.add('active');
+            loadEditProfileForm();
+        }
+        else if (pageName === 'myAddresses') {
+            document.getElementById('myAddressesPage').classList.add('active');
+            renderAddresses();
+        }
+    }
+
+    // Scroll ke atas
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
         // Order Tracking Functions
         function renderOrderTracking() {
@@ -3485,6 +3549,9 @@
                             <img src="${product.image}" alt="${product.name}">
                         </div>
                     </div>
+                    <div style="position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; color: #27ae60; z-index: 10; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <i class="fas fa-check-circle"></i> Quality Checked
+                    </div>
                     <div class="product-badge">${discount}% OFF</div>
                     <div class="product-content">
                         <h3 class="product-title">${product.name}</h3>
@@ -3859,10 +3926,10 @@
                 });
 
                 searchInput.addEventListener('keyup', (e) => {
-                    if (e.key === 'Enter') {
-                        searchProducts();
-                    }
-                });
+    if (e.key === 'Enter') {
+        applySearchAndFilter(); // <--- Panggil fungsi baru yang lebih canggih
+    }
+});
             } catch (error) {
                 console.error("Error init:", error);
                 // Jangan tampilkan alert error jika hanya masalah sepele
@@ -4037,86 +4104,83 @@
         }
 
         function showProductDetail(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            
-            const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-            const images = product.images || [product.image];
-            
-            productModal.classList.add('active');
-            overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            modalBody.innerHTML = `
-                <div class="product-detail-layout">
-                    <div class="product-detail-image">
-                        <img src="${images[0]}" alt="${product.name}" id="mainDetailImage">
-                        ${images.length > 1 ? `
-                            <div class="modal-image-gallery">
-                                ${images.map((img, idx) => `
-                                    <img src="${img}" 
-                                         alt="${product.name} - ${idx + 1}" 
-                                         class="${idx === 0 ? 'main-image' : ''}"
-                                         onclick="changeMainImage('${img}', this)">
-                                `).join('')}
-                            </div>
-                        ` : ''}
+    // GANTI '===' JADI '==' DI SINI
+    const product = products.find(p => p.id == productId);
+    
+    if (!product) return;
+    
+    const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+    const images = product.images || [product.image];
+    
+    // ... (kode sisanya sama, tidak perlu diubah) ...
+    
+    productModal.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Pastikan tombol di dalam modal juga tidak pakai tanda kutip berlebih atau logic aman
+    // Di sini kita update logika render modal-nya:
+    modalBody.innerHTML = `
+        <div class="product-detail-layout">
+            <div class="product-detail-image">
+                <img src="${images[0]}" alt="${product.name}" id="mainDetailImage">
+                ${images.length > 1 ? `
+                    <div class="modal-image-gallery">
+                        ${images.map((img, idx) => `
+                            <img src="${img}" 
+                                 class="${idx === 0 ? 'main-image' : ''}"
+                                 onclick="changeMainImage('${img}', this)">
+                        `).join('')}
                     </div>
-                    <div class="product-detail-info">
-                        <h1 class="detail-title">${product.name}</h1>
-                        <div class="detail-badge">${discount}% OFF</div>
-                        <div class="detail-price">
-                            <span class="price-now">Rp ${product.price.toLocaleString('id-ID')}</span>
-                            <span class="price-original">Rp ${product.originalPrice.toLocaleString('id-ID')}</span>
-                        </div>
-                        <div class="detail-seller">
-                            <i class="fas fa-user"></i>
-                            <div>
-                                <strong>${product.seller}</strong>
-                                <span>${product.location}</span>
-                            </div>
-                        </div>
-                        <div class="detail-description">
-                            <h3>Deskripsi</h3>
-                            <p>${product.description}</p>
-                        </div>
-                        <div class="detail-specs">
-                            <h3>Detail Produk</h3>
-                            <div class="spec-item">
-                                <span>Merek:</span>
-                                <strong>${product.details.merek}</strong>
-                            </div>
-                            <div class="spec-item">
-                                <span>Kondisi:</span>
-                                <strong>${product.details.kondisi}</strong>
-                            </div>
-                            <div class="spec-item">
-                                <span>Berat/Ukuran:</span>
-                                <strong>${product.details.berat}</strong>
-                            </div>
-                            <div class="spec-item">
-                                <span>Stok:</span>
-                                <strong>${product.stock} unit</strong>
-                            </div>
-                        </div>
-       
-                        <div class="detail-actions">
-                            ${product.stock > 0 ? `
-                                <button class="btn-primary" onclick="addToCart(${product.id}); closeDetailModal();" style="width: 100%;">
-                                    <i class="fas fa-shopping-cart"></i>
-                                    Tambah ke Keranjang
-                                </button>
-                            ` : `
-                                <button class="btn-primary" style="background-color: var(--gray); cursor: not-allowed; width: 100%;" disabled>
-                                    <i class="fas fa-times-circle"></i>
-                                    Stok Habis
-                                </button>
-                            `}
-                        </div>
+                ` : ''}
+            </div>
+            <div class="product-detail-info">
+                <h1 class="detail-title">${product.name}</h1>
+                <div class="detail-badge">${discount}% OFF</div>
+                <div class="detail-price">
+                    <span class="price-now">Rp ${product.price.toLocaleString('id-ID')}</span>
+                    <span class="price-original">Rp ${product.originalPrice.toLocaleString('id-ID')}</span>
+                </div>
+                <div class="detail-seller">
+                    <i class="fas fa-user"></i>
+                    <div>
+                        <strong>${product.seller}</strong>
+                        <span>${product.location}</span>
                     </div>
                 </div>
-            `;
-        }
+                <div class="detail-description">
+                    <h3>Deskripsi</h3>
+                    <p>${product.description}</p>
+                </div>
+                <div class="detail-specs">
+                    <h3>Detail Produk</h3>
+                    <div class="spec-item">
+                        <span>Merek:</span>
+                        <strong>${product.details.merek}</strong>
+                    </div>
+                    <div class="spec-item">
+                        <span>Kondisi:</span>
+                        <strong>${product.details.kondisi}</strong>
+                    </div>
+                </div>
+
+                <div class="detail-actions">
+                    ${product.stock > 0 ? `
+                        <button class="btn-primary" onclick="addToCart('${product.id}'); closeDetailModal();" style="width: 100%;">
+                            <i class="fas fa-shopping-cart"></i>
+                            Tambah ke Keranjang
+                        </button>
+                    ` : `
+                        <button class="btn-primary" style="background-color: var(--gray); cursor: not-allowed; width: 100%;" disabled>
+                            <i class="fas fa-times-circle"></i>
+                            Stok Habis
+                        </button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
 
         function changeMainImage(imageSrc, clickedElement) {
             const mainImage = document.getElementById('mainDetailImage');
@@ -4137,36 +4201,39 @@
 
         // --- PASTIKAN FUNGSI addToCart ADA DI SINI ---
         function addToCart(productId, quantity = 1) {
-            const product = products.find(p => p.id === productId);
-            if (!product) {
-                showNotification('Produk tidak ditemukan!');
-                return;
-            }
+    // GANTI '===' JADI '==' AGAR BISA BACA ANGKA MAUPUN TEKS
+    const product = products.find(p => p.id == productId); 
+    
+    if (!product) {
+        showNotification('Produk tidak ditemukan!');
+        return;
+    }
 
-            const existingItem = cart.find(item => item.product.id === productId);
+    // Cek produk yang sudah ada di keranjang (gunakan '==' juga)
+    const existingItem = cart.find(item => item.product.id == productId);
 
-            if (existingItem) {
-                if (existingItem.quantity + quantity > product.stock) {
-                    showNotification(`Stok tersisa hanya ${product.stock}!`);
-                    return;
-                }
-                existingItem.quantity += quantity;
-            } else {
-                if (quantity > product.stock) {
-                    showNotification(`Stok tersisa hanya ${product.stock}!`);
-                    return;
-                }
-                cart.push({
-                    product: product,
-                    quantity: quantity,
-                    selected: true
-                });
-            }
-
-            saveCartToStorage();
-            updateCartUI();
-            showNotification('Produk berhasil masuk keranjang!');
+    if (existingItem) {
+        if (existingItem.quantity + quantity > product.stock) {
+            showNotification(`Stok tersisa hanya ${product.stock}!`);
+            return;
         }
+        existingItem.quantity += quantity;
+    } else {
+        if (quantity > product.stock) {
+            showNotification(`Stok tersisa hanya ${product.stock}!`);
+            return;
+        }
+        cart.push({
+            product: product,
+            quantity: quantity,
+            selected: true
+        });
+    }
+
+    saveCartToStorage();
+    updateCartUI();
+    showNotification('Produk berhasil masuk keranjang!');
+}
         // --- AKHIR FUNGSI addToCart ---
 
         // --- PASTIKAN FUNGSI removeFromCart ADA DI BAWAHNYA ---
@@ -4339,31 +4406,38 @@
         }
 
         function toggleWishlist(productId) {
-            const index = wishlist.indexOf(productId);
-            const product = products.find(p => p.id === productId);
+    // Kita paksa konversi ke String atau Angka agar konsisten saat pencarian index
+    // Cara paling aman: Cari manual dengan loose comparison (==)
+    
+    // Cek apakah ada di wishlist (pakai findIndex agar bisa pakai '==')
+    const index = wishlist.findIndex(id => id == productId);
+    
+    // Cari data produknya
+    const product = products.find(p => p.id == productId);
 
-            if (index > -1) {
-                // Remove from wishlist
-                wishlist.splice(index, 1);
-                showNotification(`"${product.name}" dihapus dari wishlist`);
-            } else {
-                // Add to wishlist
-                wishlist.push(productId);
-                showNotification(`"${product.name}" ditambahkan ke wishlist`);
-            }
+    if (index > -1) {
+        // Hapus dari wishlist
+        wishlist.splice(index, 1);
+        if(product) showNotification(`"${product.name}" dihapus dari wishlist`);
+    } else {
+        // Tambah ke wishlist
+        wishlist.push(productId); // Simpan ID aslinya
+        if(product) showNotification(`"${product.name}" ditambahkan ke wishlist`);
+    }
 
-            saveWishlistToStorage();
-            renderProducts(); // Re-render to update heart icons
-            
-            // If currently on wishlist page, re-render it to immediately remove the item
-            if (currentPage === 'wishlist') {
-                renderWishlist();
-            }
-        }
+    saveWishlistToStorage();
+    renderProducts(); 
+    
+    if (currentPage === 'wishlist') {
+        renderWishlist();
+    }
+}
 
-        function isInWishlist(productId) {
-            return wishlist.includes(productId);
-        }
+// Jangan lupa update fungsi pengecekannya juga:
+function isInWishlist(productId) {
+    // Gunakan 'some' dengan '=='
+    return wishlist.some(id => id == productId);
+}
 
         // Render Wishlist
         function renderWishlist() {
@@ -4714,11 +4788,18 @@
                     paymentMethod: paymentNames[selectedPayment],
                     status: 'processing',
                     tracking: [
-                        { title: 'Pesanan Dikonfirmasi', description: 'Pesanan Anda telah dikonfirmasi', icon: 'fa-check-circle', completed: true, active: false, time: new Date().toLocaleString('id-ID') },
-                        { title: 'Sedang Diproses', description: 'Penjual sedang memproses pesanan Anda', icon: 'fa-box', completed: false, active: true, time: '' },
-                        { title: 'Dalam Pengiriman', description: 'Paket sedang dalam perjalanan', icon: 'fa-truck', completed: false, active: false, time: '' },
-                        { title: 'Pesanan Diterima', description: 'Paket telah diterima', icon: 'fa-home', completed: false, active: false, time: '' }
-                    ]
+                    { 
+                        title: 'Pembayaran Diterima (Escrow)', 
+                        description: 'Dana aman disimpan oleh Second Chance. Menunggu penjual memproses.', 
+                        icon: 'fa-shield-alt', // Ikon tameng (Escrow)
+                        completed: true, 
+                        active: false, 
+                        time: new Date().toLocaleString('id-ID') 
+                    },
+                    { title: 'Verifikasi Barang', description: 'Penjual menyiapkan & cek ulang kondisi barang', icon: 'fa-search', completed: false, active: true, time: '' },
+                    { title: 'Dalam Pengiriman', description: 'Kurir sedang menuju lokasi Anda', icon: 'fa-truck', completed: false, active: false, time: '' },
+                    { title: 'Pesanan Diterima', description: 'Dana akan diteruskan ke penjual', icon: 'fa-hand-holding-usd', completed: false, active: false, time: '' }
+                ]
                 };
 
                 // SIMPAN KE FIREBASE (Collection 'orders')
@@ -4964,6 +5045,71 @@
             renderIncomingOrders(status);
         }
 
+        // --- DATA WILAYAH SEMARANG ---
+const semarangData = {
+    "Banyumanik": ["Banyumanik", "Gedawang", "Jabungan", "Ngesrep", "Padangsari", "Pedalangan", "Pudakpayung", "Srondol Kulon", "Srondol Wetan", "Sumurboto", "Tinjomoyo"],
+    "Candisari": ["Candi", "Jatingaleh", "Jomblang", "Kaliwiru", "Karanganyar Gunung", "Tegalsari", "Wonotingal"],
+    "Gajahmungkur": ["Bendanduwur", "Bendan Ngisor", "Bendungan", "Gajahmungkur", "Karangrejo", "Lempongsari", "Petompon", "Sampangan"],
+    "Gayamsari": ["Gayamsari", "Kaligawe", "Pandean Lamper", "Sambirejo", "Sawahbesar", "Siwalan", "Tambakrejo"],
+    "Genuk": ["Bangetayu Kulon", "Bangetayu Wetan", "Banjardowo", "Gebangsari", "Genuksari", "Karangroto", "Kudu", "Muktiharjo Lor", "Penggaron Lor", "Sembungharjo", "Terboyo Kulon", "Terboyo Wetan", "Trimulyo"],
+    "Gunungpati": ["Cepoko", "Gunungpati", "Jatirejo", "Kalisegoro", "Kandri", "Mangunsari", "Ngijo", "Nongkosawit", "Pakintelan", "Patemon", "Plalangan", "Pongangan", "Sadeng", "Sekaran", "Sukorejo", "Sumurejo"],
+    "Mijen": ["Bubakan", "Cangkiran", "Jatisari", "Karangmalang", "Kedungpani", "Mijen", "Ngadirgo", "Pesantren", "Polaman", "Purwosari", "Tambangan", "Wonolopo", "Wonoplumbon"],
+    "Ngaliyan": ["Bambankerep", "Bringin", "Gondoriyo", "Kalipancur", "Ngaliyan", "Podorejo", "Purwoyoso", "Tambakaji", "Wates", "Wonosari"],
+    "Pedurungan": ["Gemah", "Kalicari", "Muktiharjo Kidul", "Palebon", "Pedurungan Kidul", "Pedurungan Lor", "Pedurungan Tengah", "Penggaron Kidul", "Plamongan Sari", "Tlogomulyo", "Tlogosari Kulon", "Tlogosari Wetan"],
+    "Semarang Barat": ["Bojongsalaman", "Bongsari", "Cabean", "Gisikdrono", "Kalibanteng Kidul", "Kalibanteng Kulon", "Karangayu", "Kembangarum", "Krapyak", "Krobokan", "Manyaran", "Ngemplak Simongan", "Salamanmloyo", "Tambakharjo", "Tawangmas", "Tawangsari"],
+    "Semarang Selatan": ["Barusari", "Bulustalan", "Lamper Kidul", "Lamper Lor", "Lamper Tengah", "Mugassari", "Peterongan", "Pleburan", "Randusari", "Wonodri"],
+    "Semarang Tengah": ["Bangunharjo", "Brumbungan", "Gabahan", "Jagalan", "Karangkidul", "Kauman", "Kembang Sari", "Krandang", "Miroto", "Pandansari", "Pekunden", "Pendrikan Kidul", "Pendrikan Lor", "Purwodinatan", "Sekayu"],
+    "Semarang Timur": ["Bugangan", "Karangtempel", "Karangturi", "Kebonagung", "Kemijen", "Mlatibaru", "Mlatiharjo", "Rejomulyo", "Rejosari", "Sarirejo"],
+    "Semarang Utara": ["Bandarharjo", "Bululor", "Dadapsari", "Kuningan", "Panggung Kidul", "Panggung Lor", "Plombokan", "Purwosari", "Tanjung Mas"],
+    "Tembalang": ["Bulusan", "Jangli", "Kedungmundu", "Kramas", "Mangunharjo", "Meteseh", "Rowosari", "Sambiroto", "Sendangguwo", "Sendangmulyo", "Tandang", "Tembalang"],
+    "Tugu": ["Jerakah", "Karanganyar", "Mangkang Kulon", "Mangkang Wetan", "Mangunharjo", "Randu Garut", "Tugurejo"]
+};
+
+// Fungsi untuk mengisi Dropdown Kecamatan saat halaman dimuat
+function initLocationDropdowns() {
+    const kecSelect = document.getElementById('kecamatanSelect');
+    
+    // Urutkan nama kecamatan secara abjad
+    const sortedKecamatan = Object.keys(semarangData).sort();
+
+    sortedKecamatan.forEach(kec => {
+        const option = document.createElement('option');
+        option.value = kec;
+        option.textContent = kec;
+        kecSelect.appendChild(option);
+    });
+}
+
+// Fungsi update Kelurahan berdasarkan Kecamatan yang dipilih
+function updateKelurahan() {
+    const kecSelect = document.getElementById('kecamatanSelect');
+    const kelSelect = document.getElementById('kelurahanSelect');
+    const selectedKec = kecSelect.value;
+
+    // Reset kelurahan
+    kelSelect.innerHTML = '<option value="">Pilih Kelurahan</option>';
+    kelSelect.disabled = true;
+
+    if (selectedKec && semarangData[selectedKec]) {
+        kelSelect.disabled = false;
+        
+        // Urutkan kelurahan
+        const sortedKelurahan = semarangData[selectedKec].sort();
+
+        sortedKelurahan.forEach(kel => {
+            const option = document.createElement('option');
+            option.value = kel;
+            option.textContent = kel;
+            kelSelect.appendChild(option);
+        });
+    }
+}
+
+// Panggil fungsi init saat aplikasi siap
+document.addEventListener('DOMContentLoaded', () => {
+    initLocationDropdowns();
+});
+
         async function submitNewProduct(event) {
             event.preventDefault();
 
@@ -4973,6 +5119,15 @@
                 return;
             }
 
+            const kecamatan = document.getElementById('kecamatanSelect').value;
+            const kelurahan = document.getElementById('kelurahanSelect').value;
+
+            if (!kecamatan || !kelurahan) {
+                showNotification('Mohon lengkapi lokasi Kecamatan dan Kelurahan!');
+                return;
+            }
+
+            const fullLocation = `${kelurahan}, ${kecamatan}, Semarang`;
             // Validasi Harga
             const price = parseInt(document.getElementById('productPrice').value);
             const originalPrice = parseInt(document.getElementById('productOriginalPrice').value);
@@ -4988,23 +5143,24 @@
             
             // Siapkan Object Data Produk
             const newProduct = {
-                name: document.getElementById('productName').value.trim(),
-                price: price,
-                originalPrice: originalPrice,
-                category: document.getElementById('productCategory').value,
-                images: [...uploadedImages],
-                image: uploadedImages[0], // Foto utama
-                seller: document.getElementById('productSeller').value.trim() || 'Anonymous',
-                location: document.getElementById('productLocation').value.trim() || 'Unknown',
-                stock: parseInt(document.getElementById('productStock').value),
-                description: document.getElementById('productDescription').value.trim(),
-                details: {
-                    merek: document.getElementById('productBrand').value.trim() || 'Tidak disebutkan',    
-                    kondisi: document.getElementById('productCondition').value,
-                    berat: document.getElementById('productWeight').value.trim() || 'Tidak disebutkan'    
-                },
-                createdAt: Date.now(), // Untuk sorting lokal sementara
-                isMine: true
+            name: document.getElementById('productName').value.trim(),
+            price: price, // Pastikan variabel price dari kode lama Anda ada di atas ini
+            originalPrice: originalPrice, // Pastikan variabel originalPrice ada
+            category: document.getElementById('productCategory').value,
+            images: [...uploadedImages],
+            image: uploadedImages[0],
+            seller: document.getElementById('productSeller').value.trim() || 'Anonymous',
+            location: fullLocation, // <--- GUNAKAN VARIABEL LOKASI BARU DI SINI
+        
+            stock: parseInt(document.getElementById('productStock').value),
+            description: document.getElementById('productDescription').value.trim(),
+            details: {
+            merek: document.getElementById('productBrand').value.trim() || 'Tidak disebutkan',     
+            kondisi: document.getElementById('productCondition').value,
+            berat: document.getElementById('productWeight').value.trim() || 'Tidak disebutkan'     
+            },
+            createdAt: Date.now(),
+            isMine: true
             };
 
             // --- SIMPAN KE FIREBASE (INTI PERBAIKAN) ---
@@ -5759,63 +5915,104 @@
         }
 
         async function markOrderAsReceived(orderId) {
-            if (!confirm("Apakah Anda yakin barang sudah diterima dan sesuai pesanan? Status akan diubah menjadi 'Selesai'.")) {
-                return;
-            }
+    if (!confirm("Konfirmasi barang sudah sesuai? Dana akan diteruskan ke Penjual.")) {
+        return;
+    }
 
-            const currentUser = localStorage.getItem('currentUser');
-            if (!currentUser) return;
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) return;
 
-            // 1. Cari Order di Array Lokal
-            const orderIndex = orders.findIndex(o => o.id === orderId);
-            if (orderIndex === -1) return;
+    // 1. Cari Order
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) return;
+    const order = orders[orderIndex];
 
-            const order = orders[orderIndex];
+    // --- HITUNGAN KEUANGAN (MANAJEMEN KEUANGAN) ---
+    // Rumus: Net = Gross - (Gross * Commission Rate)
+    const commissionRate = 0.05; // 5% Komisi sesuai gambar
+    const grossAmount = order.subtotal; // Harga barang saja (tanpa ongkir)
+    const commissionFee = grossAmount * commissionRate;
+    const netProfit = grossAmount - commissionFee; // Uang yang diterima penjual
 
-            // 2. Update Data Tracking (Semua langkah jadi completed)
-            const updatedTracking = order.tracking.map(step => ({
-                ...step,
-                completed: true,
-                active: step.title === 'Pesanan Diterima' // Hanya langkah terakhir yg active
-            }));
+    // Format Rupiah
+    const fmt = (num) => "Rp " + num.toLocaleString('id-ID');
 
-            // Tambahkan waktu diterima
-            updatedTracking[updatedTracking.length - 1].time = new Date().toLocaleString('id-ID');
+    // 2. Update Tracking
+    const updatedTracking = order.tracking.map(step => ({
+        ...step,
+        completed: true,
+        active: step.title === 'Pesanan Diterima'
+    }));
+    
+    // Tambahkan stempel waktu
+    updatedTracking[updatedTracking.length - 1].time = new Date().toLocaleString('id-ID');
+    updatedTracking[updatedTracking.length - 1].description = `Dana ${fmt(netProfit)} diteruskan ke Penjual (Potongan 5%)`;
 
-            showNotification('Mengupdate status pesanan...');
+    showNotification('Memproses pencairan dana ke penjual...');
 
-            // 3. UPDATE KE FIREBASE
-            if (window.db && window.firestoreDoc && window.firestoreUpdateDoc) {
-                try {
-                    // Gunakan ID dokumen dari order (pastikan fetchOrdersFromFirebase mengisi id dengan doc.id)
-                    const orderRef = window.firestoreDoc(window.db, "orders", order.id);
-                    
-                    await window.firestoreUpdateDoc(orderRef, {
-                        status: 'delivered',
-                        tracking: updatedTracking,
-                        updatedAt: Date.now()
-                    });
-                    
-                    console.log("Status pesanan berhasil diupdate di Firebase");
-                } catch (error) {
-                    console.error("Gagal update status:", error);
-                    showNotification('Gagal update ke server, cek koneksi internet.');
-                    return; // Jangan lanjut update lokal jika server gagal (opsional)
-                }
-            }
-
-            // 4. Update Lokal & UI
-            order.status = 'delivered';
-            order.tracking = updatedTracking;
-            
-            saveOrdersToStorage();
-            
-            // Refresh halaman agar order pindah dari Tracking ke Riwayat
-            renderOrderTracking(); 
-            renderOrderHistory(); // Jika user pindah tab nanti datanya sudah siap
-            
-            showNotification('Pesanan selesai! Terima kasih telah berbelanja.');
+    // 3. UPDATE KE FIREBASE
+    if (window.db && window.firestoreDoc && window.firestoreUpdateDoc) {
+        try {
+            const orderRef = window.firestoreDoc(window.db, "orders", order.id);
+            await window.firestoreUpdateDoc(orderRef, {
+                status: 'delivered',
+                tracking: updatedTracking,
+                financials: { // Simpan data keuangan untuk laporan
+                    gross: grossAmount,
+                    commission: commissionFee,
+                    net: netProfit,
+                    rate: "5%"
+                },
+                updatedAt: Date.now()
+            });
+        } catch (error) {
+            console.error("Gagal update status:", error);
         }
+    }
+
+    // 4. Update Lokal & Tampilkan Laporan Keuangan Singkat
+    order.status = 'delivered';
+    order.tracking = updatedTracking;
+    
+    saveOrdersToStorage();
+    renderOrderTracking(); 
+    
+    // TAMPILKAN MODAL SUKSES (SIMULASI PENCAIRAN)
+    const modal = document.getElementById('productModal');
+    const modalBody = document.getElementById('modalBody');
+    const overlay = document.getElementById('overlay');
+    
+    modal.classList.add('active');
+    overlay.classList.add('active');
+    
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 30px;">
+            <div style="width: 80px; height: 80px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-check" style="font-size: 40px; color: #155724;"></i>
+            </div>
+            <h2 style="color: #155724; margin-bottom: 10px;">Transaksi Selesai!</h2>
+            <p style="color: #666; margin-bottom: 20px;">Dana Escrow telah dicairkan.</p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px dashed #28a745; margin-bottom: 20px; text-align: left;">
+                <h4 style="margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Rincian Pencairan (Seller)</h4>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Harga Barang:</span>
+                    <span>${fmt(grossAmount)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #dc3545;">
+                    <span>Komisi Aplikasi (5%):</span>
+                    <span>- ${fmt(commissionFee)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; font-size: 18px; color: #28a745;">
+                    <span>Diterima Penjual:</span>
+                    <span>${fmt(netProfit)}</span>
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="closeDetailModal(); showPage('orderHistory');" style="width: 100%;">Tutup</button>
+        </div>
+    `;
+}
 
         function loadSellerInfoFromAddress() {
             loadAddressesFromStorage();
@@ -5835,6 +6032,98 @@
             }
         }
 
+        // --- FITUR FILTER LANJUTAN ---
+
+// 1. Buka/Tutup Modal Filter
+function openFilterModal() {
+    const modal = document.getElementById('filterModal');
+    const overlay = document.getElementById('overlay');
+    
+    // Populate lokasi jika belum ada isinya
+    const locSelect = document.getElementById('filterLocation');
+    if (locSelect.options.length <= 1) {
+        // Menggunakan data semarangData yang sudah ada di kodemu
+        const sortedKecamatan = Object.keys(semarangData).sort();
+        sortedKecamatan.forEach(kec => {
+            const option = document.createElement('option');
+            option.value = kec;
+            option.textContent = kec;
+            locSelect.appendChild(option);
+        });
+    }
+    
+    modal.classList.add('active');
+    overlay.classList.add('active');
+}
+
+function closeFilterModal() {
+    document.getElementById('filterModal').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+}
+
+// 2. Reset Filter
+function resetFilters() {
+    document.getElementById('filterMinPrice').value = '';
+    document.getElementById('filterMaxPrice').value = '';
+    document.getElementById('filterLocation').value = '';
+    document.getElementById('filterSort').value = 'newest';
+    applySearchAndFilter(); // Terapkan reset
+}
+
+// 3. LOGIKA UTAMA: Gabungan Search + Filter
+function applySearchAndFilter() {
+    // Ambil semua nilai input
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const minPrice = parseInt(document.getElementById('filterMinPrice').value) || 0;
+    const maxPrice = parseInt(document.getElementById('filterMaxPrice').value) || Infinity;
+    const location = document.getElementById('filterLocation').value;
+    const sortType = document.getElementById('filterSort').value;
+
+    // Mulai filter dari data utama
+    let result = products.filter(p => {
+        // 1. Filter Kategori (Active Category)
+        if (activeCategory !== 'all' && p.category !== activeCategory) return false;
+
+        // 2. Filter Search Term (Nama, Deskripsi, Kategori)
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm) || 
+                              p.category.toLowerCase().includes(searchTerm) ||
+                              p.description.toLowerCase().includes(searchTerm);
+        if (!matchesSearch) return false;
+
+        // 3. Filter Harga
+        if (p.price < minPrice || p.price > maxPrice) return false;
+
+        // 4. Filter Lokasi (Cek apakah string lokasi mengandung nama kecamatan)
+        if (location && !p.location.includes(location)) return false;
+
+        return true;
+    });
+
+    // 5. Sorting / Urutan
+    if (sortType === 'price_asc') {
+        result.sort((a, b) => a.price - b.price);
+    } else if (sortType === 'price_desc') {
+        result.sort((a, b) => b.price - a.price);
+    } else if (sortType === 'newest') {
+        // Urutkan berdasarkan ID (asumsi ID besar = baru) atau createdAt jika ada
+        result.sort((a, b) => (b.createdAt || b.id) - (a.createdAt || a.id));
+    }
+
+    // Update global variable currentProducts
+    currentProducts = result;
+    
+    // Render ulang tampilan
+    renderProducts();
+    
+    // Tutup modal jika sedang terbuka
+    closeFilterModal();
+    
+    // Tampilkan notifikasi kecil hasil pencarian
+    if (currentProducts.length > 0) {
+        // Opsional: Scroll ke hasil
+        document.getElementById('productsContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
