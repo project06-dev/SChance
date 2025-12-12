@@ -3042,7 +3042,10 @@ let products = [
         // GANTI function showPage(pageName) dengan yang ini:
 
 async function showPage(pageName) {
-    // 1. TUTUP INTERFACE LAIN
+    // 1. UPDATE STATUS HALAMAN (Baris Baru yang Penting)
+    currentPage = pageName; 
+
+    // 2. TUTUP INTERFACE LAIN
     const cartSidebar = document.getElementById('cartSidebar');
     const overlay = document.getElementById('overlay');
     const productModal = document.getElementById('productModal');
@@ -3052,38 +3055,33 @@ async function showPage(pageName) {
     if (overlay) overlay.classList.remove('active');
     document.body.style.overflow = '';
 
-    // 2. SEMBUNYIKAN SEMUA HALAMAN
+    // 3. SEMBUNYIKAN SEMUA HALAMAN
     document.querySelectorAll('.page-section').forEach(page => {
         page.classList.remove('active');
     });
 
-    // 3. RESET NAVIGASI BAWAH
+    // 4. RESET NAVIGASI BAWAH
     document.querySelectorAll('.bottom-nav-item').forEach(item => {
         item.classList.remove('active');
     });
 
-    // --- PERBAIKAN UTAMA DI SINI ---
-    // 4. ATUR TAMPILAN HEADER (Logo & Search)
-    const mainHeader = document.querySelector('header'); // Ambil elemen Header utama
+    // 5. ATUR TAMPILAN HEADER (Logo & Search)
+    const mainHeader = document.querySelector('header');
     const categoryNav = document.getElementById('categoryNav');
 
     if (pageName === 'home') {
-        // Jika di HOME: Tampilkan Header & Navigasi Kategori
         if(mainHeader) mainHeader.style.display = 'block';
         if(categoryNav) categoryNav.style.display = 'block';
         
-        // Aktifkan tombol navigasi bawah 'Home'
         const homeBtn = document.querySelector('.bottom-nav-item[onclick*="home"]');
         if(homeBtn) homeBtn.classList.add('active');
         
         document.getElementById('homePage').classList.add('active');
     } 
     else {
-        // Jika BUKAN di Home (Jual, Profile, dll): SEMBUNYIKAN Header & Kategori
-        if(mainHeader) mainHeader.style.display = 'none';  // <--- INI KUNCINYA
+        if(mainHeader) mainHeader.style.display = 'none'; 
         if(categoryNav) categoryNav.style.display = 'none';
 
-        // Logika Halaman Lain
         if (pageName === 'jual') {
             document.getElementById('jualPage').classList.add('active');
             const jualBtn = document.querySelector('.bottom-nav-item[onclick*="jual"]');
@@ -4069,30 +4067,47 @@ async function deleteProduct(productId) {
         // Fungsi untuk mengubah slide
         let currentSlideIndex = {};
         
-        function changeSlide(productId, direction) {
-            const slider = document.getElementById(`slider-${productId}`);
-            const slides = slider.querySelectorAll('.product-image-slide');
-            const dots = slider.querySelectorAll('.slider-dot');
-            
-            if (!currentSlideIndex[productId]) {
-                currentSlideIndex[productId] = 0;
-            }
-            
-            slides[currentSlideIndex[productId]].classList.remove('active');
-            dots[currentSlideIndex[productId]].classList.remove('active');
-            
-            currentSlideIndex[productId] += direction;
-            
-            if (currentSlideIndex[productId] >= slides.length) {
-                currentSlideIndex[productId] = 0;
-            }
-            if (currentSlideIndex[productId] < 0) {
-                currentSlideIndex[productId] = slides.length - 1;
-            }
-            
-            slides[currentSlideIndex[productId]].classList.add('active');
-            dots[currentSlideIndex[productId]].classList.add('active');
+        // GANTI FUNGSI changeSlide YANG LAMA DENGAN INI
+function changeSlide(productId, direction) {
+    const slider = document.getElementById(`slider-${productId}`);
+    if (!slider) return; // Safety check
+
+    const slides = slider.querySelectorAll('.product-image-slide');
+    const dots = slider.querySelectorAll('.slider-dot');
+    
+    // 1. Cari slide mana yang SEDANG aktif di layar saat ini
+    let activeIndex = 0;
+    slides.forEach((slide, index) => {
+        if (slide.classList.contains('active')) {
+            activeIndex = index;
         }
+    });
+
+    // 2. Hapus class 'active' dari slide (dan dot) yang sekarang
+    slides[activeIndex].classList.remove('active');
+    if (dots.length > 0 && dots[activeIndex]) {
+        dots[activeIndex].classList.remove('active');
+    }
+
+    // 3. Hitung index slide berikutnya
+    let newIndex = activeIndex + direction;
+
+    // Logika Looping (Jika di akhir kembali ke awal, dan sebaliknya)
+    if (newIndex >= slides.length) {
+        newIndex = 0; // Kembali ke awal
+    } else if (newIndex < 0) {
+        newIndex = slides.length - 1; // Lompat ke akhir
+    }
+
+    // 4. Tambahkan class 'active' ke slide (dan dot) yang baru
+    slides[newIndex].classList.add('active');
+    if (dots.length > 0 && dots[newIndex]) {
+        dots[newIndex].classList.add('active');
+    }
+
+    // Simpan ke variable global (opsional, untuk keperluan lain)
+    currentSlideIndex[productId] = newIndex;
+}
 
         function goToSlide(productId, index) {
             const slider = document.getElementById(`slider-${productId}`);
@@ -4449,13 +4464,10 @@ async function deleteProduct(productId) {
         }
 
         function toggleWishlist(productId) {
-    // Kita paksa konversi ke String atau Angka agar konsisten saat pencarian index
-    // Cara paling aman: Cari manual dengan loose comparison (==)
-    
-    // Cek apakah ada di wishlist (pakai findIndex agar bisa pakai '==')
+    // Cari index menggunakan == (loose comparison) untuk menangani string vs number
     const index = wishlist.findIndex(id => id == productId);
     
-    // Cari data produknya
+    // Cari data produk untuk notifikasi
     const product = products.find(p => p.id == productId);
 
     if (index > -1) {
@@ -4464,14 +4476,17 @@ async function deleteProduct(productId) {
         if(product) showNotification(`"${product.name}" dihapus dari wishlist`);
     } else {
         // Tambah ke wishlist
-        wishlist.push(productId); // Simpan ID aslinya
+        wishlist.push(productId);
         if(product) showNotification(`"${product.name}" ditambahkan ke wishlist`);
     }
 
     saveWishlistToStorage();
-    renderProducts(); 
+    renderProducts(); // Update tampilan Home (Heart icon)
     
-    if (currentPage === 'wishlist') {
+    // CEK APAKAH HALAMAN WISHLIST SEDANG AKTIF?
+    // Jika ya, panggil renderWishlist() untuk menghapus item dari layar secara real-time
+    const wishlistPage = document.getElementById('wishlistPage');
+    if (currentPage === 'wishlist' || (wishlistPage && wishlistPage.classList.contains('active'))) {
         renderWishlist();
     }
 }
