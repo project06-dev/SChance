@@ -3570,9 +3570,9 @@ async function showPage(pageName) {
                         </div>
                     </div>
                     <div class="my-product-actions">
-                        <button class="btn-delete" onclick="deleteProduct(${product.id})">
-                            <i class="fas fa-trash"></i> Hapus
-                        </button>
+                        <button class="btn-delete" onclick="deleteProduct('${product.id}')">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
                     </div>
                 `;
                 myProductsContainer.appendChild(card);
@@ -3583,15 +3583,56 @@ async function showPage(pageName) {
             showNotification('Fitur edit akan segera hadir!');
         }
 
-        function deleteProduct(productId) {
-            if (confirm('Yakin ingin menghapus produk ini?')) {
-                products = products.filter(p => p.id !== productId);
-                currentProducts = [...products];
-                renderProducts();
-                renderMyProducts();
-                showNotification('Produk berhasil dihapus');
+        // GANTI FUNGSI deleteProduct YANG LAMA DENGAN INI
+async function deleteProduct(productId) {
+    console.log("Mencoba menghapus ID:", productId); // Debugging
+
+    if (!confirm('Yakin ingin menghapus produk ini secara permanen?')) return;
+
+    // 1. Cari produk (Gunakan '==' agar cocok baik angka maupun string)
+    const productToDelete = products.find(p => p.id == productId);
+
+    if (!productToDelete) {
+        alert("Error: Produk tidak ditemukan di data lokal.");
+        console.error("ID tidak ditemukan di array products:", productId);
+        return;
+    }
+
+    // 2. Cek apakah ini barang dari Firebase (Punya firestoreId)
+    if (productToDelete.firestoreId) {
+        // Pastikan SDK Firebase tersedia
+        if (window.db && window.firestoreDoc && window.firestoreDeleteDoc) {
+            try {
+                showNotification('Sedang menghapus dari database...');
+                
+                // HAPUS DARI FIREBASE
+                const docRef = window.firestoreDoc(window.db, "products", productToDelete.firestoreId);
+                await window.firestoreDeleteDoc(docRef);
+                
+                console.log("Sukses hapus dari Firestore");
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                alert('Gagal menghapus: ' + error.message);
+                return; // Stop jika gagal hapus di server
             }
+        } else {
+            alert("Koneksi database terputus. Coba refresh halaman.");
+            return;
         }
+    } else {
+        console.log("Ini barang dummy (lokal), tidak perlu hapus ke database.");
+    }
+
+    // 3. Hapus dari Tampilan (State Lokal)
+    products = products.filter(p => p.id != productId);
+    currentProducts = [...products];
+
+    // 4. Render Ulang Semua Halaman yang Terkait
+    renderProducts();     // Halaman Home
+    renderMyProducts();   // Halaman Barang Saya
+    
+    showNotification('Produk berhasil dihapus!');
+}
 
         function initDB() {
             return new Promise((resolve, reject) => {
