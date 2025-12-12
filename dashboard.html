@@ -4654,7 +4654,7 @@ function isInWishlist(productId) {
                     <div class="shipping-name">Reguler</div>
                     <div class="shipping-time">Estimasi 3-5 hari</div>
                 </div>
-                <div class="shipping-price">Rp 15.000</div>
+                <div class="shipping-price">Rp 5.000</div>
             </label>
             <label class="shipping-option" onclick="selectShipping('express', this)">
                 <input type="radio" name="shipping" value="express">
@@ -4662,7 +4662,7 @@ function isInWishlist(productId) {
                     <div class="shipping-name">Express</div>
                     <div class="shipping-time">Estimasi 1-2 hari</div>
                 </div>
-                <div class="shipping-price">Rp 25.000</div>
+                <div class="shipping-price">Rp 10.000</div>
             </label>
             <label class="shipping-option" onclick="selectShipping('sameday', this)">
                 <input type="radio" name="shipping" value="sameday">
@@ -4670,7 +4670,7 @@ function isInWishlist(productId) {
                     <div class="shipping-name">Same Day</div>
                     <div class="shipping-time">Estimasi hari ini</div>
                 </div>
-                <div class="shipping-price">Rp 40.000</div>
+                <div class="shipping-price">Rp 20.000</div>
             </label>
         </div>
 
@@ -4719,9 +4719,9 @@ function isInWishlist(productId) {
 
         function calculatePriceBreakdown(subtotal) {
             const shippingCosts = {
-                'regular': 15000,
-                'express': 25000,
-                'sameday': 40000
+                'regular': 5000,
+                'express': 10000,
+                'sameday': 20000
             };
             
             const shippingCost = shippingCosts[selectedShipping];
@@ -4765,7 +4765,7 @@ function isInWishlist(productId) {
 
     showNotification('Sedang memproses transaksi...');
 
-    const shippingCosts = { 'regular': 15000, 'express': 25000, 'sameday': 40000 };
+    const shippingCosts = { 'regular': 5000, 'express': 10000, 'sameday': 20000 };
     // COD dihapus dari daftar paymentNames di bawah ini
     const paymentNames = { 'transfer': 'Transfer Bank', 'ewallet': 'E-Wallet', 'cc': 'Kartu Kredit' };
     const shippingMethodNames = { 'regular': 'Reguler', 'express': 'Express', 'sameday': 'Same Day' };
