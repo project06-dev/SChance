@@ -4596,121 +4596,110 @@ function isInWishlist(productId) {
         }
 
         function showCheckoutModal(selectedItems) {
-            const subtotal = selectedItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-            
-            // 1. Ambil Alamat Utama (Default)
-            // Pastikan array 'addresses' sudah terisi (nanti kita perbaiki fungsi load-nya)
-            const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
+    const subtotal = selectedItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    
+    // 1. Ambil Alamat Utama (Default)
+    const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
 
-            productModal.classList.add('active');
-            overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            // 2. Siapkan HTML untuk bagian Alamat
-            let addressHTML = '';
-            if (defaultAddress) {
-                addressHTML = `
-                    <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--pink-dark);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <h4 style="color: var(--pink-dark); margin:0;"><i class="fas fa-map-marker-alt"></i> Alamat Pengiriman</h4>
-                            <button onclick="showPage('myAddresses'); closeDetailModal();" style="font-size:12px; color: var(--gray); background:none; border:none; cursor:pointer; text-decoration:underline;">Ubah Alamat</button>
-                        </div>
-                        <div style="font-weight:600;">${defaultAddress.recipientName} (${defaultAddress.phone})</div>
-                        <div style="font-size:13px; color:var(--text); margin-top:5px;">${defaultAddress.address}</div>
-                        <div style="font-size:13px; color:var(--text);">${defaultAddress.city}, ${defaultAddress.province} ${defaultAddress.postalCode}</div>
+    productModal.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // 2. Siapkan HTML untuk bagian Alamat
+    let addressHTML = '';
+    if (defaultAddress) {
+        addressHTML = `
+            <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--pink-dark);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="color: var(--pink-dark); margin:0;"><i class="fas fa-map-marker-alt"></i> Alamat Pengiriman</h4>
+                    <button onclick="showPage('myAddresses'); closeDetailModal();" style="font-size:12px; color: var(--gray); background:none; border:none; cursor:pointer; text-decoration:underline;">Ubah Alamat</button>
+                </div>
+                <div style="font-weight:600;">${defaultAddress.recipientName} (${defaultAddress.phone})</div>
+                <div style="font-size:13px; color:var(--text); margin-top:5px;">${defaultAddress.address}</div>
+                <div style="font-size:13px; color:var(--text);">${defaultAddress.city}, ${defaultAddress.province} ${defaultAddress.postalCode}</div>
+            </div>
+        `;
+    } else {
+        addressHTML = `
+            <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align:center;">
+                <p style="color: #856404; margin-bottom:10px;">Anda belum mengatur alamat pengiriman.</p>
+                <button class="btn-primary" onclick="showAddAddressModal();" style="font-size:12px; padding: 8px 15px;">
+                    <i class="fas fa-plus"></i> Tambah Alamat
+                </button>
+            </div>
+        `;
+    }
+
+    modalBody.innerHTML = `
+        ${addressHTML} <div class="checkout-summary">
+            <h3 style="margin-bottom: 15px; color: var(--pink-dark);">
+                <i class="fas fa-shopping-bag"></i> Ringkasan Pesanan
+            </h3>
+            <div class="checkout-items-list">
+                ${selectedItems.map(item => `
+                    <div class="checkout-item">
+                        <span class="checkout-item-name">${item.product.name}</span>
+                        <span class="checkout-item-qty">x${item.quantity}</span>
+                        <span class="checkout-item-price">Rp ${formatPrice(item.product.price * item.quantity)}</span>
                     </div>
-                `;
-            } else {
-                addressHTML = `
-                    <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align:center;">
-                        <p style="color: #856404; margin-bottom:10px;">Anda belum mengatur alamat pengiriman.</p>
-                        <button class="btn-primary" onclick="showAddAddressModal();" style="font-size:12px; padding: 8px 15px;">
-                            <i class="fas fa-plus"></i> Tambah Alamat
-                        </button>
-                    </div>
-                `;
-            }
+                `).join('')}
+            </div>
+        </div>
 
-            modalBody.innerHTML = `
-                ${addressHTML} <div class="checkout-summary">
-                    <h3 style="margin-bottom: 15px; color: var(--pink-dark);">
-                        <i class="fas fa-shopping-bag"></i> Ringkasan Pesanan
-                    </h3>
-                    <div class="checkout-items-list">
-                        ${selectedItems.map(item => `
-                            <div class="checkout-item">
-                                <span class="checkout-item-name">${item.product.name}</span>
-                                <span class="checkout-item-qty">x${item.quantity}</span>
-                                <span class="checkout-item-price">Rp ${formatPrice(item.product.price * item.quantity)}</span>
-                            </div>
-                        `).join('')}
-                    </div>
+        <div class="shipping-options">
+            <h3><i class="fas fa-shipping-fast"></i> Pilih Pengiriman</h3>
+            <label class="shipping-option selected" onclick="selectShipping('regular', this)">
+                <input type="radio" name="shipping" value="regular" checked>
+                <div class="shipping-info">
+                    <div class="shipping-name">Reguler</div>
+                    <div class="shipping-time">Estimasi 3-5 hari</div>
                 </div>
+                <div class="shipping-price">Rp 15.000</div>
+            </label>
+            <label class="shipping-option" onclick="selectShipping('express', this)">
+                <input type="radio" name="shipping" value="express">
+                <div class="shipping-info">
+                    <div class="shipping-name">Express</div>
+                    <div class="shipping-time">Estimasi 1-2 hari</div>
+                </div>
+                <div class="shipping-price">Rp 25.000</div>
+            </label>
+            <label class="shipping-option" onclick="selectShipping('sameday', this)">
+                <input type="radio" name="shipping" value="sameday">
+                <div class="shipping-info">
+                    <div class="shipping-name">Same Day</div>
+                    <div class="shipping-time">Estimasi hari ini</div>
+                </div>
+                <div class="shipping-price">Rp 40.000</div>
+            </label>
+        </div>
 
-                <div class="shipping-options">
-                    <h3><i class="fas fa-shipping-fast"></i> Pilih Pengiriman</h3>
-                    <label class="shipping-option" onclick="selectShipping('regular', this)">
-                        <input type="radio" name="shipping" value="regular" checked>
-                        <div class="shipping-info">
-                            <div class="shipping-name">Reguler</div>
-                            <div class="shipping-time">Estimasi 3-5 hari</div>
-                        </div>
-                        <div class="shipping-price">Rp 15.000</div>
-                    </label>
-                    <label class="shipping-option" onclick="selectShipping('express', this)">
-                        <input type="radio" name="shipping" value="express">
-                        <div class="shipping-info">
-                            <div class="shipping-name">Express</div>
-                            <div class="shipping-time">Estimasi 1-2 hari</div>
-                        </div>
-                        <div class="shipping-price">Rp 25.000</div>
-                    </label>
-                    <label class="shipping-option" onclick="selectShipping('sameday', this)">
-                        <input type="radio" name="shipping" value="sameday">
-                        <div class="shipping-info">
-                            <div class="shipping-name">Same Day</div>
-                            <div class="shipping-time">Estimasi hari ini</div>
-                        </div>
-                        <div class="shipping-price">Rp 40.000</div>
-                    </label>
+        <div class="payment-methods">
+            <h3><i class="fas fa-credit-card"></i> Metode Pembayaran</h3>
+            <label class="payment-option selected" onclick="selectPayment('transfer', this)">
+                <input type="radio" name="payment" value="transfer" checked>
+                <div class="payment-icon">
+                    <i class="fas fa-university" style="color: var(--pink-dark);"></i>
                 </div>
+                <div class="payment-info">
+                    <div class="payment-name">Transfer Bank</div>
+                    <div class="payment-desc">BCA, Mandiri, BNI, BRI</div>
+                </div>
+            </label>
+        </div>
 
-                <div class="payment-methods">
-                    <h3><i class="fas fa-credit-card"></i> Metode Pembayaran</h3>
-                    <label class="payment-option" onclick="selectPayment('transfer', this)">
-                        <input type="radio" name="payment" value="transfer" checked>
-                        <div class="payment-icon">
-                            <i class="fas fa-university" style="color: var(--pink-dark);"></i>
-                        </div>
-                        <div class="payment-info">
-                            <div class="payment-name">Transfer Bank</div>
-                            <div class="payment-desc">BCA, Mandiri, BNI, BRI</div>
-                        </div>
-                    </label>
-                    <label class="payment-option" onclick="selectPayment('cod', this)">
-                        <input type="radio" name="payment" value="cod">
-                        <div class="payment-icon">
-                            <i class="fas fa-money-bill-wave" style="color: #FF6B6B;"></i>
-                        </div>
-                        <div class="payment-info">
-                            <div class="payment-name">COD (Cash on Delivery)</div>
-                            <div class="payment-desc">Bayar di tempat</div>
-                        </div>
-                    </label>
-                </div>
+        <div class="price-breakdown" id="priceBreakdown">
+            ${calculatePriceBreakdown(subtotal)}
+        </div>
 
-                <div class="price-breakdown" id="priceBreakdown">
-                    ${calculatePriceBreakdown(subtotal)}
-                </div>
-
-                <div class="form-actions">
-                    <button class="btn-cancel" onclick="closeDetailModal()">Batal</button>
-                    <button class="btn-submit" onclick="confirmCheckout()" ${!defaultAddress ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
-                        <i class="fas fa-check-circle"></i> Konfirmasi Pembayaran
-                    </button>
-                </div>
-            `;
-        }
+        <div class="form-actions">
+            <button class="btn-cancel" onclick="closeDetailModal()">Batal</button>
+            <button class="btn-submit" onclick="confirmCheckout()" ${!defaultAddress ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>
+                <i class="fas fa-check-circle"></i> Konfirmasi Pembayaran
+            </button>
+        </div>
+    `;
+}
 
         function selectShipping(type, element) {
             selectedShipping = type;
@@ -4761,115 +4750,116 @@ function isInWishlist(productId) {
 
         // Ganti fungsi confirmCheckout yang lama dengan yang ini:
         async function confirmCheckout() {
-            // Cek batasan Guest
-            if (!checkGuestRestriction('melakukan checkout')) return;
+    // Cek batasan Guest
+    if (!checkGuestRestriction('melakukan checkout')) return;
 
-            const currentUserStr = localStorage.getItem('currentUser');
-            if (!currentUserStr) return;
-            const userData = JSON.parse(currentUserStr);
+    const currentUserStr = localStorage.getItem('currentUser');
+    if (!currentUserStr) return;
+    const userData = JSON.parse(currentUserStr);
 
-            const selectedItems = cart.filter(item => item.selected);
-            if (selectedItems.length === 0) {
-                showNotification('Pilih minimal 1 produk untuk checkout');
-                return;
-            }
+    const selectedItems = cart.filter(item => item.selected);
+    if (selectedItems.length === 0) {
+        showNotification('Pilih minimal 1 produk untuk checkout');
+        return;
+    }
 
-            showNotification('Sedang memproses transaksi...');
+    showNotification('Sedang memproses transaksi...');
 
-            const shippingCosts = { 'regular': 15000, 'express': 25000, 'sameday': 40000 };
-            const paymentNames = { 'transfer': 'Transfer Bank', 'ewallet': 'E-Wallet', 'cod': 'COD', 'cc': 'Kartu Kredit' };
-            const shippingMethodNames = { 'regular': 'Reguler', 'express': 'Express', 'sameday': 'Same Day' };
+    const shippingCosts = { 'regular': 15000, 'express': 25000, 'sameday': 40000 };
+    // COD dihapus dari daftar paymentNames di bawah ini
+    const paymentNames = { 'transfer': 'Transfer Bank', 'ewallet': 'E-Wallet', 'cc': 'Kartu Kredit' };
+    const shippingMethodNames = { 'regular': 'Reguler', 'express': 'Express', 'sameday': 'Same Day' };
 
-            // --- 1. KURANGI STOK DI FIREBASE ---
-            for (const item of selectedItems) {
-                const product = products.find(p => p.id === item.product.id);
-                if (product) product.stock -= item.quantity; // Update tampilan lokal
+    // --- 1. KURANGI STOK DI FIREBASE ---
+    for (const item of selectedItems) {
+        const product = products.find(p => p.id === item.product.id);
+        if (product) product.stock -= item.quantity; // Update tampilan lokal
 
-                if (item.product.firestoreId && window.db) {
-                    try {
-                        const productRef = window.firestoreDoc(window.db, "products", item.product.firestoreId);
-                        await window.firestoreUpdateDoc(productRef, { stock: product.stock });
-                    } catch (e) { console.error("Gagal update stok:", e); }
-                }
-            }
-
-            // --- 2. BUAT & SIMPAN ORDER KE FIREBASE ---
-            // Kelompokkan item per penjual
-            const itemsBySeller = {};
-            selectedItems.forEach(item => {
-                const seller = item.product.seller;
-                if (!itemsBySeller[seller]) itemsBySeller[seller] = [];
-                itemsBySeller[seller].push(item);
-            });
-
-            // Loop setiap penjual untuk buat order terpisah
-            for (const seller of Object.keys(itemsBySeller)) {
-                const sellerItems = itemsBySeller[seller];
-                const sellerSubtotal = sellerItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-                const shippingCost = shippingCosts[selectedShipping];
-                const serviceFee = 5000;
-                const orderTotal = sellerSubtotal + shippingCost + serviceFee;
-
-                // Data Order
-                const newOrder = {
-                    userId: userData.email, // PENTING: Identitas pembeli
-                    buyerName: userData.name || 'User',
-                    date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                    createdAt: Date.now(), // Timestamp untuk sorting
-                    items: sellerItems.map(item => ({
-                        name: item.product.name,
-                        image: item.product.image,
-                        price: item.product.price,
-                        quantity: item.quantity,
-                        seller: item.product.seller
-                    })),
-                    subtotal: sellerSubtotal,
-                    shippingCost: shippingCost,
-                    serviceFee: serviceFee,
-                    total: orderTotal,
-                    shippingMethod: shippingMethodNames[selectedShipping],
-                    paymentMethod: paymentNames[selectedPayment],
-                    status: 'processing',
-                    tracking: [
-                    { 
-                        title: 'Pembayaran Diterima (Escrow)', 
-                        description: 'Dana aman disimpan oleh Second Chance. Menunggu penjual memproses.', 
-                        icon: 'fa-shield-alt', // Ikon tameng (Escrow)
-                        completed: true, 
-                        active: false, 
-                        time: new Date().toLocaleString('id-ID') 
-                    },
-                    { title: 'Verifikasi Barang', description: 'Penjual menyiapkan & cek ulang kondisi barang', icon: 'fa-search', completed: false, active: true, time: '' },
-                    { title: 'Dalam Pengiriman', description: 'Kurir sedang menuju lokasi Anda', icon: 'fa-truck', completed: false, active: false, time: '' },
-                    { title: 'Pesanan Diterima', description: 'Dana akan diteruskan ke penjual', icon: 'fa-hand-holding-usd', completed: false, active: false, time: '' }
-                ]
-                };
-
-                // SIMPAN KE FIREBASE (Collection 'orders')
-                if (window.db) {
-                    try {
-                        const docRef = await window.firestoreAddDoc(window.firestoreCollection(window.db, 'orders'), newOrder);
-                        // Tambahkan ID dari firebase ke object lokal agar bisa ditracking langsung
-                        newOrder.id = docRef.id; 
-                        orders.unshift(newOrder); // Masukkan ke array lokal
-                    } catch (error) {
-                        console.error("Gagal membuat order:", error);
-                    }
-                }
-            }
-
-            // Bersihkan Keranjang
-            cart = cart.filter(item => !item.selected);
-            saveCartToStorage();
-            updateCartUI();
-            
-            // Refresh Tampilan
-            renderProducts();
-            closeDetailModal();
-            toggleCart();
-            
-            showNotification('Pesanan berhasil dibuat & tersimpan!');
+        if (item.product.firestoreId && window.db) {
+            try {
+                const productRef = window.firestoreDoc(window.db, "products", item.product.firestoreId);
+                await window.firestoreUpdateDoc(productRef, { stock: product.stock });
+            } catch (e) { console.error("Gagal update stok:", e); }
         }
+    }
+
+    // --- 2. BUAT & SIMPAN ORDER KE FIREBASE ---
+    // Kelompokkan item per penjual
+    const itemsBySeller = {};
+    selectedItems.forEach(item => {
+        const seller = item.product.seller;
+        if (!itemsBySeller[seller]) itemsBySeller[seller] = [];
+        itemsBySeller[seller].push(item);
+    });
+
+    // Loop setiap penjual untuk buat order terpisah
+    for (const seller of Object.keys(itemsBySeller)) {
+        const sellerItems = itemsBySeller[seller];
+        const sellerSubtotal = sellerItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+        const shippingCost = shippingCosts[selectedShipping];
+        const serviceFee = 5000;
+        const orderTotal = sellerSubtotal + shippingCost + serviceFee;
+
+        // Data Order
+        const newOrder = {
+            userId: userData.email, // PENTING: Identitas pembeli
+            buyerName: userData.name || 'User',
+            date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            createdAt: Date.now(), // Timestamp untuk sorting
+            items: sellerItems.map(item => ({
+                name: item.product.name,
+                image: item.product.image,
+                price: item.product.price,
+                quantity: item.quantity,
+                seller: item.product.seller
+            })),
+            subtotal: sellerSubtotal,
+            shippingCost: shippingCost,
+            serviceFee: serviceFee,
+            total: orderTotal,
+            shippingMethod: shippingMethodNames[selectedShipping],
+            paymentMethod: paymentNames[selectedPayment] || 'Transfer Bank', // Default fallback
+            status: 'processing',
+            tracking: [
+            { 
+                title: 'Pembayaran Diterima (Escrow)', 
+                description: 'Dana aman disimpan oleh Second Chance. Menunggu penjual memproses.', 
+                icon: 'fa-shield-alt', // Ikon tameng (Escrow)
+                completed: true, 
+                active: false, 
+                time: new Date().toLocaleString('id-ID') 
+            },
+            { title: 'Verifikasi Barang', description: 'Penjual menyiapkan & cek ulang kondisi barang', icon: 'fa-search', completed: false, active: true, time: '' },
+            { title: 'Dalam Pengiriman', description: 'Kurir sedang menuju lokasi Anda', icon: 'fa-truck', completed: false, active: false, time: '' },
+            { title: 'Pesanan Diterima', description: 'Dana akan diteruskan ke penjual', icon: 'fa-hand-holding-usd', completed: false, active: false, time: '' }
+        ]
+        };
+
+        // SIMPAN KE FIREBASE (Collection 'orders')
+        if (window.db) {
+            try {
+                const docRef = await window.firestoreAddDoc(window.firestoreCollection(window.db, 'orders'), newOrder);
+                // Tambahkan ID dari firebase ke object lokal agar bisa ditracking langsung
+                newOrder.id = docRef.id; 
+                orders.unshift(newOrder); // Masukkan ke array lokal
+            } catch (error) {
+                console.error("Gagal membuat order:", error);
+            }
+        }
+    }
+
+    // Bersihkan Keranjang
+    cart = cart.filter(item => !item.selected);
+    saveCartToStorage();
+    updateCartUI();
+    
+    // Refresh Tampilan
+    renderProducts();
+    closeDetailModal();
+    toggleCart();
+    
+    showNotification('Pesanan berhasil dibuat & tersimpan!');
+}
 
         function showNotification(message) {
             const notificationText = document.getElementById('notificationText');
